@@ -1,0 +1,75 @@
+/* Self-hosted fonts (SIL OFL 1.1, licences in each folder). All URLs are relative to this file. */
+
+/* Display: Anton (static 400) */
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('anton/anton-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('anton/anton-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Text: Space Grotesk (variable, wght 300-700) */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('space-grotesk/space-grotesk-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('space-grotesk/space-grotesk-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Labels: JetBrains Mono (variable, wght 100-800) */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('jetbrains-mono/jetbrains-mono-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('jetbrains-mono/jetbrains-mono-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Arrow glyphs ← ↑ → ↓ ↖ ↗ ↘ ↙ (missing from the latin subsets) */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('jetbrains-mono/jetbrains-mono-arrows-wght-normal.woff2') format('woff2');
+  unicode-range: U+2190-2193, U+2196-2199;
+}
+
+/* Vertical margin type: Noto Serif JP (variable, wght 200-900), glyph subset only:
+   造形立体想像現実設計積層光夜熱糸一二三四五六〇第章・参道灯冷却組対話重をねる静 */
+@font-face {
+  font-family: 'Noto Serif JP';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('noto-serif-jp/noto-serif-jp-subset-wght.woff2') format('woff2');
+  unicode-range: U+3007, U+306D, U+308B, U+3092, U+30FB, U+4E00, U+4E09, U+4E8C, U+4E94, U+4F53, U+50CF, U+5149, U+516D, U+51B7, U+5374, U+53C2, U+56DB, U+591C, U+5B9F, U+5BFE, U+5C64, U+5F62, U+60F3, U+706F, U+71B1, U+73FE, U+7A4D, U+7ACB, U+7AE0, U+7B2C, U+7CF8, U+7D44, U+8A08, U+8A2D, U+8A71, U+9020, U+9053, U+91CD, U+9759;
+}

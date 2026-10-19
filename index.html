@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3DVERSE — A Journey From Imagination To Reality</title>
+  <meta name="description" content="3DVERSE, Event 01 · 2026. A one-day 3D printing event by the IoT &amp; Robotics Club, Bennett University. Nov 15, 2026 · 10:00 AM – 4:00 PM · Tech Lab 3.">
+  <meta name="theme-color" content="#0A0A0B">
+  <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/anton/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/space-grotesk/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/jetbrains-mono/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script>
+    document.documentElement.classList.add('js', 'has-reveal');
+    // failsafe: if the reveal module hasn't taken over in time, show everything
+    setTimeout(function () { if (!window.__revealReady) document.documentElement.classList.remove('has-reveal'); }, 3000);
+  </script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.js",
+      "three/addons/": "./vendor/three/addons/",
+      "uqr": "./vendor/uqr/index.mjs"
+    }
+  }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<!-- Shared SVG symbols: logo mark and icons (kept rendered but zero-sized) -->
+<svg class="defs" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 32 32">
+      <rect x="11.5" y="5.5" width="15" height="15" fill="none" stroke="currentColor"/>
+      <circle cx="14" cy="18" r="9" fill="#FF5F1F"/>
+      <path d="M5.6 20.5h16.8M6.6 23.5h14.8M9 26.5h10" stroke="#0A0A0B" stroke-width="1.2"/>
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 34 18">
+      <path d="M0 9h30M22.5 1.5 30.5 9l-8 7.5" fill="none" stroke="currentColor" stroke-width="3"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="31" fill="none" stroke="currentColor"/>
+      <path d="M27 22.5 41 32l-14 9.5z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24">
+      <path d="M3.5 5.5h17v15h-17zM3.5 10h17M8 3v5M16 3v5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M12 7v5.2l3.4 2.1" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24">
+      <path d="M12 21s-6.5-5.9-6.5-11a6.5 6.5 0 0 1 13 0c0 5.1-6.5 11-6.5 11z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="i-nozzle" viewBox="0 0 32 32">
+      <path d="M11 4h10v7H11zM12 7h8M9.5 11h13v5h-13zM13.5 16h5L16 20.5zM5 26h22M10 23h12" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </symbol>
+    <symbol id="i-cube" viewBox="0 0 32 32">
+      <path d="M16 4.5 26.5 10.5v11L16 27.5 5.5 21.5v-11zM16 16.5l10.5-6M16 16.5v11M16 16.5 5.5 10.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <path d="M16 4.5v12M5.5 21.5 16 16.5l10.5 5" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1.5 2.5"/>
+    </symbol>
+    <symbol id="i-build" viewBox="0 0 32 32">
+      <path d="M19.5 5.5a6 6 0 0 0-6.8 8.1L5 21.3 10.7 27l7.7-7.7a6 6 0 0 0 8.1-6.8l-3.6 3.6-4.2-1.1-1.1-4.2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-talk" viewBox="0 0 32 32">
+      <path d="M4.5 6.5h15v10h-8l-4.5 4v-4H4.5zM19.5 11.5h8v10h-2.5v4l-4.5-4h-5.5v-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M8.5 11.5h7" stroke="currentColor" stroke-width="1.4"/>
+    </symbol>
+
+  </defs>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Backdrop: CSS gradient fallback with the WebGL world on top once it is ready -->
+<div class="stage" aria-hidden="true"><canvas class="world" data-world></canvas></div>
+
+<!-- Foreground cutouts: one group per chapter, fixed to the bottom of the viewport, faded in by the scroll
+     state. Layers run back to front; --w width and --x centre offset (vw), --shade depth brightness,
+     --d parallax depth, --b bottom offset, --flip mirrors. Sources are assigned by js/ui/foreground.js when a group is near. -->
+<div class="foreground" aria-hidden="true">
+  <div class="fg" data-fg>
+    <img class="fg__layer" data-cutout="low-poly-pines" style="--w: 124vw; --x: 0vw; --shade: 0.63; --d: 0.25; --b: -6vh" sizes="(max-width: 640px) 224vw, 124vw" width="2400" height="1000" alt="">
+    <img class="fg__layer" data-cutout="orange-filament-branch" style="--w: 64vw; --x: -24vw; --shade: 1.00; --d: 0.6" sizes="(max-width: 640px) 116vw, 64vw" width="2400" height="1000" alt="">
+    <img class="fg__layer" data-cutout="filament-grass" style="--w: 112vw; --x: 0vw; --d: 1; --b: -7vh" sizes="(max-width: 640px) 202vw, 112vw" width="2400" height="700" alt="">
+  </div>
+  <div class="fg" data-fg>
+    <img class="fg__layer" data-cutout="printed-wall" style="--w: 120vw; --x: 4vw; --shade: 0.68; --d: 0.3" sizes="(max-width: 640px) 216vw, 120vw" width="2400" height="800" alt="">
+    <img class="fg__layer" data-cutout="voxel-stones" style="--w: 108vw; --x: -2vw; --d: 0.9" sizes="(max-width: 640px) 196vw, 108vw" width="2400" height="800" alt="">
+  </div>
+  <div class="fg" data-fg>
+    <img class="fg__layer" data-cutout="wire-hills" style="--w: 126vw; --x: 0vw; --shade: 0.48; --d: 0.2; --b: -10vh" sizes="(max-width: 640px) 228vw, 126vw" width="2400" height="900" alt="">
+    <img class="fg__layer" data-cutout="support-bushes" style="--w: 112vw; --x: 2vw; --shade: 0.93; --d: 0.55" sizes="(max-width: 640px) 202vw, 112vw" width="2400" height="900" alt="">
+    <img class="fg__layer" data-cutout="filament-grass" style="--w: 112vw; --x: 0vw; --d: 1; --flip: -1" sizes="(max-width: 640px) 202vw, 112vw" width="2400" height="700" alt="">
+  </div>
+  <div class="fg" data-fg>
+    <img class="fg__layer" data-cutout="nozzle-lanterns" style="--w: 118vw; --x: 0vw; --shade: 0.83; --d: 0.35" sizes="(max-width: 640px) 212vw, 118vw" width="2400" height="1000" alt="">
+    <img class="fg__layer" data-cutout="spool-stack" style="--w: 100vw; --x: -4vw; --d: 0.8" sizes="(max-width: 640px) 180vw, 100vw" width="2400" height="900" alt="">
+    <img class="fg__layer" data-cutout="voxel-stones" style="--w: 110vw; --x: 0vw; --d: 1; --flip: -1" sizes="(max-width: 640px) 198vw, 110vw" width="2400" height="800" alt="">
+  </div>
+  <div class="fg" data-fg>
+    <img class="fg__layer" data-cutout="wire-hills" style="--w: 110vw; --x: 0vw; --shade: 0.38; --d: 0.2; --b: -14vh; --flip: -1" sizes="(max-width: 640px) 198vw, 110vw" width="2400" height="900" alt="">
+    <img class="fg__layer" data-cutout="ruins" style="--w: 108vw; --x: 0vw; --shade: 0.98; --d: 0.6" sizes="(max-width: 640px) 196vw, 108vw" width="2400" height="900" alt="">
+    <img class="fg__layer" data-cutout="orange-filament-branch" style="--w: 64vw; --x: 24vw; --d: 1; --flip: -1" sizes="(max-width: 640px) 116vw, 64vw" width="2400" height="1000" alt="">
+  </div>
+</div>
+
+<header class="nav" data-nav data-inert-when-menu>
+  <a class="brand" href="#hero">
+    <svg class="brand__mark" aria-hidden="true" focusable="false"><use href="#i-mark"/></svg>
+    <span class="brand__name">3DVERSE</span>
+    <span class="brand__sep" aria-hidden="true">/</span>
+    <span class="brand__tag">From Imagination To Reality</span>
+  </a>
+  <nav class="nav__primary" aria-label="Primary">
+    <ul class="nav__links">
+      <li><a href="#threshold" data-nav-link>Lab</a></li>
+      <li><a href="#gardens" data-nav-link>Workshop</a></li>
+      <li><a href="#craft" data-nav-link>Craft</a></li>
+      <li><a class="nav__cta" href="#afterlight" data-nav-link>Register</a></li>
+    </ul>
+  </nav>
+  <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu" data-menu-open>
+    <span class="sr-only">Open menu</span>
+    <span class="nav__bars" aria-hidden="true"></span>
+  </button>
+</header>
+
+<!-- Full-screen mobile menu -->
+<div class="menu" id="menu" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+  <div class="menu__bar">
+    <span class="brand" aria-hidden="true">
+      <svg class="brand__mark" focusable="false"><use href="#i-mark"/></svg>
+      <span class="brand__name">3DVERSE</span>
+    </span>
+    <button class="menu__close" type="button" data-menu-close>
+      <span class="sr-only">Close menu</span>
+      <span class="menu__x" aria-hidden="true"></span>
+    </button>
+  </div>
+  <h2 id="menu-title" class="sr-only"><span class="w"><span class="w__i">Menu</span></span></h2>
+  <nav class="menu__nav" aria-label="Chapters">
+    <ol class="menu__list">
+      <li><a href="#threshold"><span class="menu__num">01</span><span class="menu__word">Lab</span><span class="menu__jp" lang="ja">第一章</span></a></li>
+      <li><a href="#gardens"><span class="menu__num">02</span><span class="menu__word">Workshop</span><span class="menu__jp" lang="ja">第二章</span></a></li>
+      <li><a href="#craft"><span class="menu__num">03</span><span class="menu__word">Craft</span><span class="menu__jp" lang="ja">第三章</span></a></li>
+      <li><a href="#afterlight"><span class="menu__num">04</span><span class="menu__word">Register</span><span class="menu__jp" lang="ja">第四章</span></a></li>
+    </ol>
+  </nav>
+  <p class="menu__foot label">Nov 15, 2026 · 10:00 AM – 4:00 PM · Bennett University, Tech&nbsp;Lab&nbsp;3</p>
+</div>
+
+<!-- Right-edge chapter rail -->
+<nav class="rail" aria-label="Chapter progress" data-inert-when-menu>
+  <ol>
+    <li><a href="#hero" aria-current="true"><span class="rail__label">00 Entrance</span></a></li>
+    <li><a href="#threshold"><span class="rail__label">01 The Threshold</span></a></li>
+    <li><a href="#gardens"><span class="rail__label">02 Still Workshop</span></a></li>
+    <li><a href="#craft"><span class="rail__label">03 The Craft</span></a></li>
+    <li><a href="#afterlight"><span class="rail__label">04 Afterlight</span></a></li>
+  </ol>
+</nav>
+
+<div class="progress" aria-hidden="true"><span class="progress__bar" data-progress></span></div>
+
+<main id="main" data-inert-when-menu>
+
+  <!-- 00 · HERO ------------------------------------------------------------ -->
+  <section id="hero" class="hero" aria-labelledby="hero-title" tabindex="-1">
+    <div class="hero__screen wrap">
+      <div class="hero__year" aria-hidden="true"><span class="hero__year-rule"></span><span class="hero__year-text">2026</span><span class="hero__year-rule"></span></div>
+
+      <div class="hero__top">
+        <p class="hero__credit">
+          <span class="hero__club">IoT &amp; Robotics Club</span>
+          <span class="hero__presents">Presents</span>
+          <span class="hero__org">Student Cabinet · School of CSET · Bennett University (NAAC A+)</span>
+        </p>
+        <p class="hero__event">
+          <span class="hero__event-id">Event 01</span>
+          <span class="hero__event-date">Nov 15, 2026</span>
+        </p>
+      </div>
+
+      <ol class="hero__chapters" aria-label="Chapters">
+        <li><a href="#threshold"><span class="hero__num">01</span><span class="hero__chap">The Threshold</span></a></li>
+        <li><a href="#gardens"><span class="hero__num">02</span><span class="hero__chap">Still Workshop</span></a></li>
+        <li><a href="#craft"><span class="hero__num">03</span><span class="hero__chap">The Craft</span></a></li>
+        <li><a href="#afterlight"><span class="hero__num">04</span><span class="hero__chap">Afterlight</span></a></li>
+      </ol>
+
+      <h1 id="hero-title" class="hero__title">
+        <span class="sr-only">3DVERSE</span>
+        <span class="w hero__word" aria-hidden="true"><span><span class="w__i">3</span></span><span><span class="w__i">D</span></span><span><span class="w__i">V</span></span><span><span class="w__i">E</span></span><span><span class="w__i">R</span></span><span><span class="w__i">S</span></span><span><span class="w__i">E</span></span></span>
+      </h1>
+
+      <div class="hero__foot">
+        <a class="scroll-cue" href="#threshold">Scroll to enter</a>
+        <p class="hero__tagline">A Journey From Imagination To Reality</p>
+        <p class="hero__layer label" aria-hidden="true">Layer 0000 / 1000</p>
+      </div>
+
+      <span class="plus" style="--x: 38%; --y: 30%" aria-hidden="true"></span>
+      <span class="plus" style="--x: 71%; --y: 44%" aria-hidden="true"></span>
+    </div>
+
+    <div class="hero__intro wrap grid">
+      <h2 class="hero__intro-title display">
+        <span class="line"><span class="w"><span class="w__i">An</span></span> <span class="w"><span class="w__i">empty</span></span> <span class="w"><span class="w__i">bed,</span></span></span>
+        <span class="line"><span class="w"><span class="w__i">a</span></span> <span class="w"><span class="w__i">spool</span></span> <span class="w"><span class="w__i">of</span></span> <span class="w"><span class="w__i">light,</span></span></span>
+        <span class="line"><span class="w"><span class="w__i">one</span></span> <span class="w"><span class="w__i">idea</span></span> <span class="w"><span class="w__i">left</span></span> <span class="w"><span class="w__i">open.</span></span></span>
+      </h2>
+      <div class="hero__intro-copy">
+        <p class="lede">Every object starts the same way: cold glass, a coil of filament and a thought nobody has printed yet. For one day the IoT &amp; Robotics Club opens its print lab to anyone with an idea. Come in empty-handed, leave holding something you designed.</p>
+        <p class="label">Nov 15, 2026 · 10:00 AM – 4:00 PM · Tech&nbsp;Lab&nbsp;3</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01 · THRESHOLD ------------------------------------------------------- -->
+  <section id="threshold" class="chapter threshold" aria-labelledby="threshold-title" tabindex="-1">
+    <div class="wrap">
+      <div class="chapter__bar">
+        <p class="label label--accent">01 — The Threshold</p>
+        <p class="label" aria-hidden="true">Layer 0001 / 1000</p>
+      </div>
+
+      <div class="grid threshold__grid">
+        <h2 id="threshold-title" class="display display--l threshold__title"><span class="w"><span class="w__i">Where</span></span> <span class="w"><span class="w__i">imagination</span></span> <span class="w"><span class="w__i">first</span></span> <span class="w"><span class="w__i">touches</span></span> <span class="w"><span class="w__i">the</span></span> <span class="w"><span class="w__i">bed.</span></span></h2>
+
+        <figure class="film" data-cursor="play">
+          <div class="film__frame">
+            <img class="art" src="assets/img/first-layer.webp" srcset="assets/img/first-layer-800.webp 800w, assets/img/first-layer.webp 1600w" sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 22vw" width="1600" height="1200" alt="The print head laying the first glowing layer on the bed while the rest of the fox is still a wireframe" loading="lazy" decoding="async">
+            <span class="film__hud film__hud--tl" aria-hidden="true"><i class="film__rec"></i>Rec · Layer 001</span>
+            <span class="film__hud film__hud--tr" aria-hidden="true">Z 0.20</span>
+            <span class="film__scrub" aria-hidden="true"><i></i></span>
+            <svg class="film__play" aria-hidden="true" focusable="false"><use href="#i-play"/></svg>
+          </div>
+          <figcaption class="film__cap label"><span>Film — The first layer</span><span>00:48</span></figcaption>
+        </figure>
+
+        <dl class="readout threshold__readout">
+          <div><dt>Layer</dt><dd>0.20 mm</dd></div>
+          <div><dt>Z-axis</dt><dd>000.20</dd></div>
+          <div><dt>Bed</dt><dd>60 °C</dd></div>
+          <div><dt>Nozzle</dt><dd>215 °C</dd></div>
+        </dl>
+
+        <p class="lede threshold__lede">Before the first layer there is only a flat build plate and a nozzle waiting 0.20 mm above it. This is where the walk begins: sketch it, slice it, send it, and watch one glowing line of filament turn a thought into a thing.</p>
+
+        <div class="vert threshold__vert">
+          <p class="vert__jp" lang="ja">造形</p>
+          <p class="vert__note label" aria-hidden="true">Zokei — form-making</p>
+        </div>
+      </div>
+    </div>
+    <span class="plus" style="--x: 46%; --y: 86%" aria-hidden="true"></span>
+  </section>
+
+  <!-- 02 · STILL WORKSHOP -------------------------------------------------- -->
+  <section id="gardens" class="chapter gardens" aria-labelledby="gardens-title" tabindex="-1">
+    <div class="wrap">
+      <div class="chapter__bar">
+        <p class="label label--accent">02 — The Still Workshop</p>
+        <p class="label" aria-hidden="true">Layer 0412 / 1000</p>
+      </div>
+
+      <div class="grid gardens__head">
+        <h2 id="gardens-title" class="display display--l gardens__title"><span class="w"><span class="w__i">Nothing</span></span> <span class="w"><span class="w__i">moves</span></span> <span class="w"><span class="w__i">but</span></span> <span class="w"><span class="w__i">the</span></span> <span class="w"><span class="w__i">nozzle.</span></span></h2>
+        <p class="lede gardens__lede">Hours into a long print the lab goes quiet. Fans hum, hot-ends glow like lanterns, and a shape climbs out of the bed one hair-thin layer at a time.</p>
+      </div>
+
+      <div class="frames">
+        <!-- APPROACH: the gantry gate on the stepped terraces, under the orange disc -->
+        <figure class="frame frame--lg" data-cursor="view">
+          <div class="frame__img">
+            <img class="art" src="assets/img/approach.webp" srcset="assets/img/approach-800.webp 800w, assets/img/approach.webp 1600w" sizes="(max-width: 960px) 92vw, 53vw" width="1600" height="1600" alt="Printed stair slabs climbing to the printer gantry, framed like a gate against a huge orange moon" loading="lazy" decoding="async">
+            <p class="frame__jp" lang="ja">参道</p>
+            <h3 class="frame__title"><span class="w"><span class="w__i">Approach</span></span></h3>
+          </div>
+          <figcaption class="frame__cap label"><span>The long print — 01 / 03</span><span>Z 000.20 → 184.60</span></figcaption>
+        </figure>
+
+        <!-- NOZZLES: hot-ends hanging like lanterns in front of warm enclosure panels -->
+        <figure class="frame" data-cursor="view">
+          <div class="frame__img">
+            <img class="art" src="assets/img/nozzles.webp" srcset="assets/img/nozzles-800.webp 800w, assets/img/nozzles.webp 1600w" sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 37vw" width="1600" height="1000" alt="Close-up of the glowing nozzle laying a hot layer on the half-printed fox" loading="lazy" decoding="async">
+            <p class="frame__jp" lang="ja">灯</p>
+            <h3 class="frame__title"><span class="w"><span class="w__i">Nozzles</span></span></h3>
+          </div>
+          <figcaption class="frame__cap label"><span>The long print — 02 / 03</span><span>Hot-end 215 °C</span></figcaption>
+        </figure>
+
+        <!-- COOLDOWN: the finished fox figurine under cold moonlight -->
+        <figure class="frame" data-cursor="view">
+          <div class="frame__img">
+            <img class="art" src="assets/img/cooldown.webp" srcset="assets/img/cooldown-800.webp 800w, assets/img/cooldown.webp 1600w" sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 37vw" width="1600" height="1000" alt="The finished low-poly fox on the bed, rim-lit against the moon" loading="lazy" decoding="async">
+            <p class="frame__jp" lang="ja">冷却</p>
+            <h3 class="frame__title"><span class="w"><span class="w__i">Cooldown</span></span></h3>
+          </div>
+          <figcaption class="frame__cap label"><span>The long print — 03 / 03</span><span>Bed 60 → 24 °C</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · THE CRAFT ------------------------------------------------------- -->
+  <section id="craft" class="chapter craft" aria-labelledby="craft-title" tabindex="-1">
+    <div class="wrap">
+      <div class="chapter__bar">
+        <p class="label label--accent">03 — The Craft</p>
+        <p class="label" aria-hidden="true">Layer 0786 / 1000</p>
+      </div>
+
+      <div class="grid craft__head">
+        <h2 id="craft-title" class="display display--l craft__title"><span class="line"><span class="w"><span class="w__i">One</span></span> <span class="w"><span class="w__i">day.</span></span> <span class="w"><span class="w__i">Six</span></span> <span class="w"><span class="w__i">hours.</span></span></span> <span class="line"><span class="w"><span class="w__i">A</span></span> <span class="w"><span class="w__i">thousand</span></span> <span class="w"><span class="w__i">layers.</span></span></span></h2>
+        <p class="lede craft__lede">Four sessions run through the day, 10:00 AM to 4:00 PM. No experience needed: every bench has printers, filament and people who have failed more prints than you will ever start.</p>
+      </div>
+
+      <figure class="frame frame--wide craft__still" data-cursor="view">
+        <div class="frame__img">
+          <img class="art" src="assets/img/lab-panels.webp" srcset="assets/img/lab-panels-800.webp 800w, assets/img/lab-panels.webp 1600w" sizes="92vw" width="1600" height="686" alt="The workshop hall at night, its paper panels glowing amber behind dark timber" loading="lazy" decoding="async">
+          <p class="frame__jp" lang="ja">光</p>
+          <h3 class="frame__title"><span class="w"><span class="w__i">The</span></span> <span class="w"><span class="w__i">hall</span></span></h3>
+        </div>
+        <figcaption class="frame__cap label"><span>Where the four sessions run</span><span>10:00 AM – 4:00 PM</span></figcaption>
+      </figure>
+
+      <ol class="sessions">
+        <li class="session">
+          <div class="session__top">
+            <span class="session__num">01</span>
+            <span class="session__tag"><span lang="ja">積層</span><span class="session__tag-en">Layering</span></span>
+          </div>
+          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-nozzle"/></svg></span>
+          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">3D</span></span> <span class="w"><span class="w__i">Printing</span></span></span> <span class="line"><span class="w"><span class="w__i">Workshop</span></span></span></h3>
+          <p class="session__desc">Level, slice and print, then watch your first part rise layer by layer.</p>
+        </li>
+        <li class="session">
+          <div class="session__top">
+            <span class="session__num">02</span>
+            <span class="session__tag"><span lang="ja">設計</span><span class="session__tag-en">Design</span></span>
+          </div>
+          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-cube"/></svg></span>
+          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">3D</span></span> <span class="w"><span class="w__i">Modeling</span></span></span> <span class="line"><span class="w"><span class="w__i">Sessions</span></span></span></h3>
+          <p class="session__desc">Turn a rough sketch into a clean model that is ready to print.</p>
+        </li>
+        <li class="session">
+          <div class="session__top">
+            <span class="session__num">03</span>
+            <span class="session__tag"><span lang="ja">組立</span><span class="session__tag-en">Assembly</span></span>
+          </div>
+          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-build"/></svg></span>
+          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">Hands-on</span></span></span> <span class="line"><span class="w"><span class="w__i">Building</span></span></span></h3>
+          <p class="session__desc">Fit, sand and finish real parts with your own hands.</p>
+        </li>
+        <li class="session">
+          <div class="session__top">
+            <span class="session__num">04</span>
+            <span class="session__tag"><span lang="ja">対話</span><span class="session__tag-en">Dialogue</span></span>
+          </div>
+          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-talk"/></svg></span>
+          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">Expert</span></span></span> <span class="line"><span class="w"><span class="w__i">Interactions</span></span></span></h3>
+          <p class="session__desc">Bring your hardest question to people who print for a living.</p>
+        </li>
+      </ol>
+    </div>
+    <span class="plus" style="--x: 82%; --y: 12%" aria-hidden="true"></span>
+  </section>
+
+  <!-- 04 · AFTERLIGHT / REGISTER ------------------------------------------- -->
+  <section id="afterlight" class="chapter afterlight" aria-labelledby="afterlight-title" tabindex="-1">
+    <div class="wrap">
+      <div class="chapter__bar">
+        <p class="label label--accent">04 — Afterlight</p>
+        <p class="label" aria-hidden="true">Layer 1000 / 1000</p>
+      </div>
+
+      <div class="grid afterlight__head">
+        <h2 id="afterlight-title" class="display display--xl afterlight__title"><span class="w"><span class="w__i">From</span></span> <span class="w"><span class="w__i">imagination</span></span> <span class="w"><span class="w__i">to</span></span> <span class="w"><span class="w__i">reality.</span></span></h2>
+        <div class="vert afterlight__vert">
+          <p class="vert__jp" lang="ja">現実</p>
+          <p class="vert__note label" aria-hidden="true">Genjitsu — reality</p>
+        </div>
+      </div>
+
+      <div class="cta">
+        <div class="cta__main">
+          <p class="lede cta__lede">One day in the lab. One object you'll carry home. Register, then bring an idea.</p>
+          <a class="btn-register" href="#afterlight" data-register>
+            <span>Register Now</span>
+            <svg class="btn-register__arrow" aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg>
+          </a>
+        </div>
+        <div class="qr">
+          <div class="qr__code" data-qr></div>
+          <div class="qr__text">
+            <p class="qr__label">Scan to register</p>
+            <p class="label">Point your camera here</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket">
+        <svg class="ticket__cubes" viewBox="0 0 150 186" aria-hidden="true" focusable="false">
+          <g stroke="#0A0A0B" stroke-opacity=".22" stroke-linejoin="round">
+            <polygon points="40,60 74,80 40,100 6,80" fill="#FAF6EE"/><polygon points="6,80 40,100 40,140 6,120" fill="#E9DDC9"/><polygon points="40,100 74,80 74,120 40,140" fill="#D8C9B0"/>
+            <polygon points="74,80 108,100 74,120 40,100" fill="#FAF6EE"/><polygon points="40,100 74,120 74,160 40,140" fill="#E9DDC9"/><polygon points="74,120 108,100 108,140 74,160" fill="#D8C9B0"/>
+            <polygon points="108,100 142,120 108,140 74,120" fill="#FAF6EE"/><polygon points="74,120 108,140 108,180 74,160" fill="#E9DDC9"/><polygon points="108,140 142,120 142,160 108,180" fill="#D8C9B0"/>
+            <polygon points="74,40 108,60 74,80 40,60" fill="#FAF6EE"/><polygon points="40,60 74,80 74,120 40,100" fill="#E9DDC9"/><polygon points="74,80 108,60 108,100 74,120" fill="#D8C9B0"/>
+          </g>
+          <path d="M74 40v40" stroke="#FF5F1F" stroke-width="2"/>
+        </svg>
+        <p class="ticket__line"><span class="nowrap">Learn 3D Printing</span> <span class="ticket__dot" aria-hidden="true">•</span> <span class="nowrap">Design Your Own Models</span></p>
+        <dl class="ticket__facts">
+          <div class="ticket__fact">
+            <dt><svg aria-hidden="true" focusable="false"><use href="#i-cal"/></svg>Date</dt>
+            <dd>Nov 15, 2026</dd>
+          </div>
+          <div class="ticket__fact">
+            <dt><svg aria-hidden="true" focusable="false"><use href="#i-clock"/></svg>Time</dt>
+            <dd>10:00 AM – 4:00 PM</dd>
+          </div>
+          <div class="ticket__fact">
+            <dt><svg aria-hidden="true" focusable="false"><use href="#i-pin"/></svg>Venue</dt>
+            <dd>Bennett University, Tech&nbsp;Lab&nbsp;3</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+    <span class="plus" style="--x: 64%; --y: 9%" aria-hidden="true"></span>
+    <span class="plus" style="--x: 9%; --y: 48%" aria-hidden="true"></span>
+  </section>
+</main>
+
+<!-- 05 · FOOTER / MANIFESTO ------------------------------------------------ -->
+<footer class="footer" data-inert-when-menu>
+  <div class="wrap">
+    <div class="footer__brand">
+      <svg class="footer__mark" aria-hidden="true" focusable="false"><use href="#i-mark"/></svg>
+      <span class="brand__name">3DVERSE</span>
+      <span class="label">Event 01 · 2026</span>
+    </div>
+
+    <p class="footer__manifesto">A five-chapter night walk through a live 3D print lab. Four sessions, one day, one object you'll carry home.</p>
+
+    <div class="grid footer__grid">
+      <p class="footer__credit label">Presented by IoT &amp; Robotics Club, Student Cabinet, School of CSET, Bennett University (NAAC A+)</p>
+      <nav class="footer__col" aria-labelledby="f-chapters">
+        <h2 id="f-chapters" class="footer__h"><span class="w"><span class="w__i">Chapters</span></span></h2>
+        <ul>
+          <li><a href="#threshold">The Threshold</a></li>
+          <li><a href="#gardens">Still Workshop</a></li>
+          <li><a href="#craft">The Craft</a></li>
+          <li><a href="#afterlight">Afterlight</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__col" aria-labelledby="f-practice">
+        <h2 id="f-practice" class="footer__h"><span class="w"><span class="w__i">Practice</span></span></h2>
+        <ul>
+          <li><a href="#craft">3D Printing Workshop</a></li>
+          <li><a href="#craft">3D Modeling Sessions</a></li>
+          <li><a href="#craft">Hands-on Building</a></li>
+          <li><a href="#craft">Expert Interactions</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__col" aria-labelledby="f-elsewhere">
+        <h2 id="f-elsewhere" class="footer__h"><span class="w"><span class="w__i">Elsewhere</span></span></h2>
+        <ul>
+          <li><a href="#afterlight" data-register>Register <span aria-hidden="true">↗</span></a></li>
+          <li><a href="https://www.bennett.edu.in/">Bennett University <span aria-hidden="true">↗</span></a></li>
+          <li><a href="#hero">Back to top <span aria-hidden="true">↑</span></a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__bottom label">
+      <p>© 2026 3DVERSE — IoT &amp; Robotics Club · <span class="jp" lang="ja">層を重ねる</span> · WebGL · Bennett</p>
+      <p aria-hidden="true">Layer 1000 / 1000</p>
+    </div>
+  </div>
+  <span class="plus" style="--x: 88%; --y: 18%" aria-hidden="true"></span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>3DVERSE asset renderer</title>
+  <link rel="icon" href="data:,">
+  <!-- Dev-only: driven headlessly by tools/render.mjs. Not part of the site. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "../vendor/three/three.module.js",
+      "three/addons/": "../vendor/three/addons/"
+    }
+  }
+  </script>
+  <style>
+    body { margin: 0; background: #15171A; color: #F1E7D6; font: 12px/1.5 monospace; }
+    pre { padding: 16px; }
+  </style>
+</head>
+<body>
+  <pre id="log">loading…</pre>
+  <script type="module" src="render-assets.js"></script>
+</body>
+</html>

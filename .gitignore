@@ -1,0 +1,3 @@
+# dev-only asset tooling (see tools/): dependencies and raw render output
+tools/node_modules/
+tools/out/
