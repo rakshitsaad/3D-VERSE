@@ -39,14 +39,12 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   background: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
 
@@ -107,6 +105,42 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 main, .footer { position: relative; z-index: 1; }
 
 section[id] { scroll-margin-top: var(--nav-h); }
+
+/* Loader (js/ui/loader.js) ---------------------------------------------------
+   Only with JS; fades out when html gets .is-loaded (the head script adds it after 15 s regardless). */
+
+.loader { display: none; }
+.js .loader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  transition: opacity 0.6s var(--ease), visibility 0s linear 0.6s;
+}
+.is-loaded .loader { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader__inner { display: grid; justify-items: center; gap: 18px; }
+.loader__mark {
+  font: 400 clamp(28px, 3vw, 40px)/0.87 var(--font-display);
+  letter-spacing: 0.08em;
+  color: var(--bone);
+}
+.loader__bar {
+  position: relative;
+  width: clamp(120px, 12vw, 180px);
+  height: 1px;
+  overflow: hidden;
+  background: var(--rule-strong);
+}
+.loader__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--vermilion);
+  transform: scaleX(0.08);
+  transform-origin: 0 50%;
+  transition: transform 0.45s var(--ease);
+}
 
 /* Backdrop (placeholder for the WebGL canvas) ---------------------------- */
 
@@ -202,7 +236,8 @@ section[id] { scroll-margin-top: var(--nav-h); }
   overflow: hidden;
   pointer-events: none;
 }
-/* js/ui/foreground.js scrubs each group's opacity, blur, rise and scale from the scroll handoff */
+/* js/ui/foreground.js scrubs each group's opacity, rise and scale from the scroll handoff (transform and
+   opacity only: no filters on these viewport-wide layers) */
 .fg {
   position: absolute;
   inset: 0;
@@ -223,7 +258,7 @@ section[id] { scroll-margin-top: var(--nav-h); }
   /* a little depth parallax: follows a fine pointer (--px) and sinks as the chapter is read (--pl) */
   transform: translate3d(calc(-50% + var(--px, 0) * var(--d, 0) * 10px), calc(var(--pl, 0) * var(--d, 0) * 2vh), 0) scaleX(var(--flip, 1));
 }
-.fg.is-visible .fg__layer { will-change: transform; }
+.fg.is-moving { will-change: opacity, transform; } /* only while a handoff moves it */
 
 @media (max-width: 640px) {
   .foreground { display: none; }
@@ -704,6 +739,7 @@ section[id] { scroll-margin-top: var(--nav-h); }
   opacity: 0.85;
 }
 .hero__word { display: flex; justify-content: center; gap: 0.05em; }
+.hero__title.is-drifting .hero__word > span { will-change: transform, opacity; }
 .hero__word > span {
   display: block;
   /* js/ui/hero.js: the letters drift apart from the centre (--li) and fade as the hero scrolls away */

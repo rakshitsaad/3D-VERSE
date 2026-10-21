@@ -9,7 +9,7 @@ import { createPrinter, PRINTER } from '../../js/world/printer.js';
 import { createNature } from '../../js/world/nature.js';
 import { createParticles } from '../../js/world/particles.js';
 
-const QUALITY = { dpr: 1, samples: 0, terrain: [120, 86], trees: 80, grass: 3600, rocks: 22, rain: 1800, curls: 70, voxels: 80, embers: 220 };
+const QUALITY = { dpr: 1, terrain: [120, 86], trees: 80, grass: 3600, rocks: 22, rain: 1800, curls: 70, voxels: 80, embers: 220 };
 const still = (width, height, build) => ({ kind: 'still', width, height, build });
 
 // Assemble the world, place the camera, then run one update so every module (nozzle, lights, moon,

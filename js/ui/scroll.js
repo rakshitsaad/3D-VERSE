@@ -12,8 +12,11 @@
 //   state.handoff   { from, to, t } while the centre line is within a short window around a block
 //                   boundary (t 0..1, 0.5 exactly at the boundary), otherwise null: the foreground
 //                   cutouts scrub their exit / arrival with it
-// Offsets come from the real layout and are re-measured whenever it changes. onFrame(state) runs on
-// every update for everything else that follows the scroll (foreground, indicators, hero letters).
+// Offsets come from the real layout and are measured only on load and when the layout changes (resize,
+// fonts, images): nothing here reads layout per frame. The scroll listener only marks the state dirty;
+// the work happens once per frame inside the site's single rAF loop (ticker.js, before the UI and the
+// world). onFrame(state) runs on every update for everything else that follows the scroll.
+import { subscribe, wake, ORDER } from './ticker.js';
 
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
@@ -111,7 +114,6 @@ export function initScroll({ onProgress, onSection, onFrame } = {}) {
   }
 
   function update() {
-    queued = false;
     const y = window.scrollY;
     const active = activeAt(y);
     state.y = y;
@@ -130,12 +132,15 @@ export function initScroll({ onProgress, onSection, onFrame } = {}) {
     onFrame?.(state);
   }
 
-  let queued = false;
+  let dirty = false;
   function queue() {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(update);
+    dirty = true;
+    wake();
   }
+  subscribe(() => {
+    if (dirty) { dirty = false; update(); }
+    return false; // the scroll itself asks for frames: only when it moves
+  }, ORDER.scroll);
   const remeasure = () => { measure(); queue(); };
 
   window.addEventListener('scroll', queue, { passive: true });

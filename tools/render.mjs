@@ -1,9 +1,10 @@
 // Offline asset renderer (dev-only; nothing here is loaded by the site).
 //   cd tools && npm install && npm run render            # everything
 //   npm run render -- filament-grass approach            # just these
+//   npm run render -- --encode-only [names]              # re-encode the WebP files from the existing masters
 // Serves the repo on a local port, drives tools/render-assets.html in headless Chrome through Playwright,
 // keeps 2x PNG masters in tools/out/png, and writes WebP files:
-//   cutouts -> assets/cutouts/<name>.webp (2400 w, alpha) + <name>-1200.webp
+//   cutouts -> assets/cutouts/<name>.webp (1920 w, alpha) + <name>-1280.webp
 //   stills  -> assets/img/<name>.webp (1600 w)            + <name>-800.webp
 // plus previews and contact sheets in tools/out for review.
 import http from 'node:http';
@@ -20,8 +21,9 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 const BG = '#15171A'; // --char, for previews of the transparent cutouts
 
 const TARGETS = {
-  // alpha edges of fine strands dominate cutout size; 78/70 is ~30% smaller and invisible on the dark page
-  cutout: { dir: 'assets/cutouts', sizes: [2400, 1200], webp: { quality: 78, alphaQuality: 70, effort: 6, smartSubsample: true } },
+  // cutouts are shown at most viewport-wide, mostly sunk below the frame and at 0.6 opacity: 1920 / 1280 w
+  // is plenty, and the alpha edges of fine strands dominate the size, so 76 / 66 stays invisible on the page
+  cutout: { dir: 'assets/cutouts', sizes: [1920, 1280], webp: { quality: 76, alphaQuality: 66, effort: 6, smartSubsample: true } },
   still: { dir: 'assets/img', sizes: [1600, 800], webp: { quality: 84, effort: 6, smartSubsample: true } },
 };
 
@@ -66,8 +68,32 @@ async function contactSheet(items, file, width = 1200) {
   await sharp({ create: { width, height: total, channels: 3, background: '#0A0A0B' } }).composite(composites).jpeg({ quality: 86 }).toFile(file);
 }
 
+async function encode(name, kind, png) {
+  const target = TARGETS[kind];
+  const sizes = [];
+  for (const [i, width] of target.sizes.entries()) {
+    const file = path.join(ROOT, target.dir, i === 0 ? `${name}.webp` : `${name}-${width}.webp`);
+    const info = await sharp(png).resize({ width, kernel: 'lanczos3' }).webp(target.webp).toFile(file);
+    sizes.push(`${info.width}x${info.height} ${kb(info.size)}`);
+  }
+  return sizes;
+}
+
+// re-encode from the masters in tools/out/png, no rendering (the kind comes from where the WebP lives)
+async function encodeOnly(only) {
+  for (const file of (await fs.readdir(path.join(OUT, 'png'))).filter((f) => f.endsWith('.png'))) {
+    const name = file.slice(0, -4);
+    if (only.size && !only.has(name)) continue;
+    const kind = await fs.access(path.join(ROOT, TARGETS.cutout.dir, `${name}.webp`)).then(() => 'cutout', () => 'still');
+    const sizes = await encode(name, kind, path.join(OUT, 'png', file));
+    console.log(`${name.padEnd(24)} ${kind.padEnd(7)} ${sizes.join('  |  ')}`);
+  }
+}
+
 async function main() {
-  const only = new Set(process.argv.slice(2));
+  const args = process.argv.slice(2);
+  if (args.includes('--encode-only')) return encodeOnly(new Set(args.filter((a) => a !== '--encode-only')));
+  const only = new Set(args);
   await fs.mkdir(path.join(OUT, 'png'), { recursive: true });
   await fs.mkdir(path.join(OUT, 'preview'), { recursive: true });
   const { server, port } = await serve();
@@ -92,13 +118,7 @@ async function main() {
     const png = Buffer.from(dataURL.slice(dataURL.indexOf(',') + 1), 'base64');
     await fs.writeFile(path.join(OUT, 'png', `${asset.name}.png`), png);
 
-    const target = TARGETS[asset.kind];
-    const sizes = [];
-    for (const [i, width] of target.sizes.entries()) {
-      const file = path.join(ROOT, target.dir, i === 0 ? `${asset.name}.webp` : `${asset.name}-${width}.webp`);
-      const info = await sharp(png).resize({ width, kernel: 'lanczos3' }).webp(target.webp).toFile(file);
-      sizes.push(`${info.width}x${info.height} ${kb(info.size)}`);
-    }
+    const sizes = await encode(asset.name, asset.kind, png);
     const preview = path.join(OUT, 'preview', `${asset.name}.jpg`);
     let img = sharp(png).resize({ width: 1600, kernel: 'lanczos3' });
     if (asset.kind === 'cutout') img = img.flatten({ background: BG });

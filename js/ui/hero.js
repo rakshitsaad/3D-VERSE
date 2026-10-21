@@ -21,6 +21,9 @@ export function initHeroDrift() {
     }
     const drift = reduced.matches ? 0 : state.heroOut;
     if (Math.abs(drift - shown) < 0.0005) return;
+    // promote the letters only while they are actually drifting (will-change is not left on)
+    const drifting = drift > 0 && drift < 1;
+    if (drifting !== (shown > 0 && shown < 1)) title.classList.toggle('is-drifting', drifting);
     shown = drift;
     title.style.setProperty('--drift', drift.toFixed(4));
   };

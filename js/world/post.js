@@ -1,4 +1,5 @@
-// Post-processing: render -> selective bloom -> lens -> (reduced-motion dissolve) -> sRGB output.
+// Post-processing: render -> selective bloom -> lens -> (reduced-motion dissolve) -> sRGB output -> FXAA.
+// No MSAA (far too expensive on half-float targets); FXAA, last, smooths the edges instead.
 //   bloom   UnrealBloomPass with its bright-pass swapped for a "glow key": hot cores pass by luminance
 //           (nozzle, sparks, the fresh layer); strongly saturated warm light passes by value at a lower
 //           weight, gated by depth: the moon (no depth, weight uMoon) and the hall's paper panels and fascia
@@ -14,6 +15,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { CopyShader } from 'three/addons/shaders/CopyShader.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
 const VERTEX = /* glsl */ `
   varying vec2 vUv;
@@ -135,11 +137,13 @@ function tone(color) {
   return c.multiplyScalar(1 / (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b));
 }
 
-export function createPost({ renderer, scene, camera, palette, quality, small }) {
-  // the depth texture feeds the lens pass's haze (each composer buffer gets its own copy)
+export function createPost({ renderer, scene, camera, palette, small }) {
+  // No MSAA: on the half-float targets it cost more than everything else together (27 -> 71 fps when
+  // removed, desktop, measured); FXAA at the end smooths the edges for a fraction of that.
+  // The depth texture feeds the lens haze and the bloom's depth gate (each composer buffer has its own).
   const target = new THREE.WebGLRenderTarget(1, 1, {
     type: THREE.HalfFloatType,
-    samples: quality.samples,
+    samples: 0,
     depthTexture: new THREE.DepthTexture(1, 1),
   });
   const composer = new EffectComposer(renderer, target);
@@ -164,15 +168,18 @@ export function createPost({ renderer, scene, camera, palette, quality, small })
     bloom.highPassUniforms.tDepth.value = readBuffer.depthTexture;
     bloomRender(r, writeBuffer, readBuffer, dt, mask);
   };
-  if (small) {
-    // low-end: bloom at half its usual resolution (a quarter of the canvas)
-    const setSize = bloom.setSize.bind(bloom);
-    bloom.setSize = (w, h) => setSize(Math.max(2, Math.round(w / 2)), Math.max(2, Math.round(h / 2)));
-  }
+  // bloom resolution: its own half-res chain, scaled down further on small screens or by the quality ladder
+  let bloomScale = small ? 0.5 : 1;
+  const bloomSetSize = bloom.setSize.bind(bloom);
+  const bloomSize = { w: 2, h: 2 };
+  bloom.setSize = (w, h) => {
+    bloomSize.w = w; bloomSize.h = h;
+    bloomSetSize(Math.max(2, Math.round(w * bloomScale)), Math.max(2, Math.round(h * bloomScale)));
+  };
   composer.addPass(bloom);
 
   const lens = new ShaderPass(LensShader);
-  lens.material.defines.CHROMA = small ? 0 : 1; // low-end: no chromatic falloff (two fewer taps per pixel)
+  lens.material.defines.CHROMA = small ? 0 : 1; // small screens: no chromatic falloff (two fewer taps per pixel)
   const u = lens.uniforms;
   u.uInk.value.copy(palette.ink);
   u.uNear.value = camera.near;
@@ -180,19 +187,33 @@ export function createPost({ renderer, scene, camera, palette, quality, small })
   u.uHazeColor.value.copy(palette.char).lerp(palette.cold, 0.14);
   u.uShadowTone.value.copy(tone(palette.char.clone().lerp(palette.cold, 0.35)));
   u.uLightTone.value.copy(tone(palette.amber.clone().lerp(palette.bone, 0.55)));
+  const CHROMA = u.uChroma.value;
+  const GRAIN = u.uGrain.value;
+  // the graded frame (lens, or the dissolve when it runs) is what the reduced-motion dissolve starts from
+  let graded = null;
   const lensRender = lens.render.bind(lens);
   lens.render = (r, writeBuffer, readBuffer, dt, mask) => {
     u.tDepth.value = readBuffer.depthTexture; // the buffer the scene was just rendered into
     lensRender(r, writeBuffer, readBuffer, dt, mask);
+    graded = writeBuffer;
   };
   composer.addPass(lens);
 
   const crossfade = new ShaderPass(CrossfadeShader);
   crossfade.enabled = false;
+  const crossfadeRender = crossfade.render.bind(crossfade);
+  crossfade.render = (r, writeBuffer, readBuffer, dt, mask) => {
+    crossfadeRender(r, writeBuffer, readBuffer, dt, mask);
+    graded = writeBuffer;
+  };
   composer.addPass(crossfade);
   composer.addPass(new OutputPass());
 
-  // holds the frame being dissolved away (the composer's read buffer is the graded, pre-output image)
+  // FXAA last, on the display-referred image (the composer renders its last enabled pass to the screen)
+  const fxaa = new ShaderPass(FXAAShader);
+  composer.addPass(fxaa);
+
+  // holds the frame being dissolved away
   const prevFrame = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
   crossfade.uniforms.tPrev.value = prevFrame.texture;
   const copy = new ShaderPass(CopyShader);
@@ -202,15 +223,49 @@ export function createPost({ renderer, scene, camera, palette, quality, small })
     bloom,
     lens,
     crossfade,
+    fxaa,
     setSize(width, height) {
       composer.setPixelRatio(renderer.getPixelRatio());
       composer.setSize(width, height);
-      prevFrame.setSize(composer.readBuffer.width, composer.readBuffer.height);
+      const w = composer.readBuffer.width, h = composer.readBuffer.height;
+      prevFrame.setSize(w, h);
       u.uAspect.value = width / height;
-      u.uResolution.value.set(composer.readBuffer.width, composer.readBuffer.height);
+      u.uResolution.value.set(w, h);
+      fxaa.material.uniforms.resolution.value.set(1 / w, 1 / h);
     },
-    // keep what is on screen now (the read buffer holds the last graded frame) for the dissolve
-    holdFrame() { copy.render(renderer, prevFrame, composer.readBuffer); },
+    // keep what is on screen now (the last graded frame) for the dissolve
+    holdFrame() { if (graded) copy.render(renderer, prevFrame, graded); },
+    // compile every post program up front (the dissolve and FXAA included), so none compiles mid-scroll
+    warm() {
+      const was = crossfade.enabled;
+      crossfade.enabled = true;
+      composer.render(0);
+      crossfade.enabled = was;
+      copy.render(renderer, prevFrame, composer.readBuffer);
+    },
+    // the adaptive quality ladder (js/world/quality.js) turns these down, never back up
+    setBloomScale(scale) {
+      if (scale === bloomScale) return false;
+      bloomScale = scale;
+      bloom.setSize(bloomSize.w, bloomSize.h);
+      return true;
+    },
+    setLensDetail(on) { // chromatic falloff and grain: uniforms only, so nothing recompiles mid-scroll
+      const was = u.uGrain.value > 0;
+      u.uChroma.value = on ? CHROMA : 0;
+      u.uGrain.value = on ? GRAIN : 0;
+      return was !== on;
+    },
+    setBloom(on) {
+      if (bloom.enabled === on) return false;
+      bloom.enabled = on;
+      return true;
+    },
+    setFxaa(on) {
+      if (fxaa.enabled === on) return false;
+      fxaa.enabled = on;
+      return true;
+    },
     dispose() {
       composer.dispose();
       prevFrame.dispose();

@@ -21,7 +21,8 @@ const EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const WORD_STAGGER = 70;
 const ITEM_STAGGER = 90;
 
-export function initReveal() {
+// ready: reveals start once it resolves (the loader), so the first screen plays as the loader fades
+export function initReveal({ ready = Promise.resolve() } = {}) {
   const root = document.documentElement;
   if (!('IntersectionObserver' in window) || !Element.prototype.animate) {
     root.classList.remove('has-reveal');
@@ -89,7 +90,7 @@ export function initReveal() {
     for (const el of fresh) reveal(el, delays.get(el));
   }, { rootMargin: '0px 0px -8% 0px' });
 
-  targets.forEach((el) => observer.observe(el));
+  ready.then(() => targets.forEach((el) => observer.observe(el)));
 
   // printing (or anything else that needs the whole page at once) gets everything revealed
   window.addEventListener('beforeprint', () => root.classList.remove('has-reveal'));

@@ -1,0 +1,4 @@
+# Vercel serves the site as plain static files from the repo root (no build step).
+# Keep dev-only material out of the upload: the offline asset renderer and the local preview config.
+tools/
+.claude/

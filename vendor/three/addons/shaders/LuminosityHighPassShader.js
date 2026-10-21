@@ -1,33 +1,4 @@
-import {
-	Color
-} from 'three';
-
-/**
- * @module LuminosityHighPassShader
- * @three_import import { LuminosityHighPassShader } from 'three/addons/shaders/LuminosityHighPassShader.js';
- */
-
-/**
- * Luminosity high pass shader.
- *
- * @constant
- * @type {ShaderMaterial~Shader}
- */
-const LuminosityHighPassShader = {
-
-	name: 'LuminosityHighPassShader',
-
-	uniforms: {
-
-		'tDiffuse': { value: null },
-		'luminosityThreshold': { value: 1.0 },
-		'smoothWidth': { value: 1.0 },
-		'defaultColor': { value: new Color( 0x000000 ) },
-		'defaultOpacity': { value: 0.0 }
-
-	},
-
-	vertexShader: /* glsl */`
+import{Color as o}from"three";const t={name:"LuminosityHighPassShader",uniforms:{tDiffuse:{value:null},luminosityThreshold:{value:1},smoothWidth:{value:1},defaultColor:{value:new o(0)},defaultOpacity:{value:0}},vertexShader:`
 
 		varying vec2 vUv;
 
@@ -37,9 +8,7 @@ const LuminosityHighPassShader = {
 
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-		}`,
-
-	fragmentShader: /* glsl */`
+		}`,fragmentShader:`
 
 		uniform sampler2D tDiffuse;
 		uniform vec3 defaultColor;
@@ -61,8 +30,4 @@ const LuminosityHighPassShader = {
 
 			gl_FragColor = mix( outputColor, texel, alpha );
 
-		}`
-
-};
-
-export { LuminosityHighPassShader };
+		}`};export{t as LuminosityHighPassShader};

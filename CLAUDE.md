@@ -90,8 +90,8 @@ Local font files only, no remote fonts.
 | Role     | `font-family`    | Files                                                           | Weights        |
 | -------- | ---------------- | --------------------------------------------------------------- | -------------- |
 | Display  | `'Anton'`        | `anton/anton-latin(-ext)-400-normal.woff2`                      | 400 (static)   |
-| Text     | `'Space Grotesk'`| `space-grotesk/space-grotesk-latin(-ext)-wght-normal.woff2`     | 300–700 (variable) |
-| Labels   | `'JetBrains Mono'`| `jetbrains-mono/jetbrains-mono-latin(-ext)-wght-normal.woff2` + `jetbrains-mono-arrows-wght-normal.woff2` | 100–800 (variable) |
+| Text     | `'Space Grotesk'`| `space-grotesk/space-grotesk-latin(-ext)-wght-normal.woff2`     | 300–600 (latin, variable) |
+| Labels   | `'JetBrains Mono'`| `jetbrains-mono/jetbrains-mono-latin(-ext)-wght-normal.woff2` + `jetbrains-mono-arrows-wght-normal.woff2` | 400–600 (latin, variable) |
 | Vertical | `'Noto Serif JP'`| `noto-serif-jp/noto-serif-jp-subset-wght.woff2`                 | 200–900 (variable) |
 
 Glyph notes (checked with fontTools):
@@ -99,16 +99,22 @@ Glyph notes (checked with fontTools):
 - **No "→" in Anton, Space Grotesk or the latin subsets.** Draw the CTA arrow in "Register Now →" as an inline SVG (`stroke="currentColor"`) sized to Anton's cap height. JetBrains Mono does have arrows (← ↑ → ↓ ↖ ↗ ↘ ↙) through the extra arrows file, so labels can use them as text.
 - `· • – & + / ×` are covered by all three Latin families.
 - **Noto Serif JP is a glyph subset.** It only contains `造形立体想像現実設計積層光夜熱糸一二三四五六〇第章・参道灯冷却組対話重をねる静` (39 glyphs). Any other CJK character falls back to a system font. To add glyphs, download a new subset once from the Google Fonts css2 API with `&text=<characters>`, replace the file, update `unicode-range` in `fonts/fonts.css`, and update this list. Never link Google Fonts at runtime.
-- Latin-ext files only download if a character in their `unicode-range` appears. Preload the critical Latin files: `<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/anton/anton-latin-400-normal.woff2">`.
+- **The three `*-latin` files are subset** (fontTools, hinting dropped) to Basic Latin plus the page's punctuation (`© ° · × – — ' ' " " • … ™`), and their `unicode-range` says exactly that; anything else falls through to the latin-ext files or the system font. Their weight axes are narrowed to the weights in use: Space Grotesk 300–600, JetBrains Mono 400–600 (all mono text uses 400, 500 or 600). Sizes: Anton 18.6 → 5.8 KB, Space Grotesk 22.3 → 12.4 KB, JetBrains Mono 40.4 → 23.4 KB. If you use a new character or weight, re-subset from the original files in git history with fontTools (`pip install fonttools brotli`): `fontTools.subset.Subsetter` with the character list above (woff2, no hinting), then `fontTools.varLib.instancer.instantiateVariableFont(font, {"wght": (min, max)})`, and update `unicode-range` / `font-weight` in `fonts/fonts.css`.
+- Latin-ext files only download if a character in their `unicode-range` appears. **Only the display font is preloaded** (`anton-latin-400-normal.woff2`: the loader's wordmark and the hero title).
 
 ---
 
 ## 6. Tech rules
 
 - Plain HTML/CSS/JS ES modules. **No frameworks, no build tools, no analytics or trackers.**
-- Three.js is vendored locally in `/vendor` (see §8). Import it through an importmap with relative paths.
+- Three.js is vendored locally in `/vendor` (see §8), minified. Import it through an importmap with relative paths.
 - **Every path must be relative** (no leading `/`) so the site works under a GitHub Pages subpath (`/<repo>/`). `.nojekyll` is in the root so Pages serves files as they are.
 - No placeholder images, no generic glassmorphism, no excessive glow, no motion without a narrative purpose.
+- **Hosting:** the GitHub repo is `rakshitsaad/3D-VERSE` (`main`). The site is deployed on Vercel as the static project `3d-verse` (team `rakshit-23cd`); production is https://3d-verse-nine.vercel.app. No build step: Vercel serves the repo root. Redeploy with `npx vercel deploy --prod` from the root (the folder is linked in `.vercel/`). `.vercelignore` keeps `tools/` and `.claude/` out of the upload. `.vercel` and `.env*` (a short-lived token the CLI writes) are git-ignored and must never be committed.
+  - **`vercel.json`** sets the caching: everything `public, max-age=0, must-revalidate` (HTML, `js/`, `css/`: they change with every deploy and have no hashed names), and `/vendor`, `/fonts`, `/assets` `public, max-age=31536000, immutable`. **Because those are cached for a year, never change a file there in place: give the new version a new name** (e.g. `ruins-v2.webp`) and update the reference. Vercel compresses text (brotli) by itself.
+  - **No request waterfall:** `index.html` lists every module (UI, world, Three.js and its addons) as `<link rel="modulepreload">` after the importmap, so the whole graph is fetched in parallel instead of import by import. Keep that list in sync when you add or remove a module.
+  - **Loader:** `js/ui/loader.js` holds the page (wordmark + orange line) until the fonts, the desktop cutouts (decoded) and the world (shaders compiled, quality settled) are ready, at most 12 s (the head script forces `.is-loaded` at 15 s). Reveals start when it finishes.
+  - Some Indian networks cannot reach the addresses `*.vercel.app` resolves to (seen from the dev machine: `216.198.79.195` / `64.29.17.195` time out while `76.76.21.21` answers). A custom domain pointed at Vercel avoids the `vercel.app` names; GitHub Pages is the fallback host (all paths are relative).
 - ES modules don't load over `file://`. For local preview, serve the root over http. `.claude/launch.json` runs `.claude/serve.py` as the `3dverse` config: it is `http.server` with `Cache-Control: no-store`, so edits always show on reload.
 
 Importmap (already in `index.html`):
@@ -117,7 +123,7 @@ Importmap (already in `index.html`):
 <script type="importmap">
 {
   "imports": {
-    "three": "./vendor/three/three.module.js",
+    "three": "./vendor/three/three.module.min.js",
     "three/addons/": "./vendor/three/addons/",
     "uqr": "./vendor/uqr/index.mjs"
   }
@@ -141,25 +147,28 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 ```
 index.html            the whole page: sections, nav, menu, rail, progress, inline SVG art
 css/main.css          tokens + all styles (breakpoints: 960px tablet, 640px phone)
-js/main.js            entry module: wires reveals, nav, cursor, scroll (+ its onFrame consumers), register links, QR; lazy-loads the world
+js/main.js            entry module: loader, reveals, nav, cursor, scroll (+ its onFrame consumers), in-page anchors, register links, QR; loads the world into the single loop
 js/config.js          REGISTER_URL
 js/ui/nav.js          mobile menu (aria-expanded, focus trap, Esc, inert background) + scrollToHash()
 js/ui/scroll.js       the one scroll state: nav + rail aria-current, camera-path progress and active section for the world
-js/ui/ticker.js       the shared rAF loop for eased UI motion; sleeps when nothing is moving
+js/ui/loader.js       the loader: tracks fonts / cutouts / world, the orange progress line, .is-loaded
+js/ui/ticker.js       the site's ONE rAF loop: scroll state, then UI, then the world's render; sleeps when idle
 js/ui/reveal.js       IntersectionObserver + Web Animations word / item / rule reveals
-js/ui/foreground.js   foreground cutouts (desktop): arrive, pin, blur away on handoff; depth parallax; lazy loading
+js/ui/foreground.js   foreground cutouts (desktop): arrive, pin, fade away on handoff; depth parallax; preload + decode
 js/ui/indicators.js   eased progress line with chapter ticks, sliding nav underline
 js/ui/hero.js         hero letters drift apart and fade; --hero (scrim handover, phone readout)
 js/ui/cursor.js       custom cursor ring (fine pointers, no reduced motion)
 js/ui/qr.js           QR code to inline SVG (uqr)
 js/world/             the WebGL environment (see "The 3D world" below)
 assets/img/           mark.svg (logo / favicon) + rendered stills (approach, nozzles, cooldown, lab-panels, first-layer, + -800); the stills are no longer on the page
-assets/cutouts/       rendered foreground cutouts, WebP with alpha (+ -1200 variants)
+assets/cutouts/       rendered foreground cutouts, WebP with alpha: <name>.webp 1920 w + <name>-1280.webp
 tools/                dev-only offline renderer for those assets (see "Offline assets" below); never loaded by the site
 fonts/                vendored fonts + fonts.css
-vendor/               three/, uqr/
+vendor/               three/ (minified), uqr/
+vercel.json           Vercel headers: long immutable cache for vendor / fonts / assets, revalidate the rest
+.vercelignore         keeps tools/ and .claude/ out of Vercel uploads
 .nojekyll             GitHub Pages: skip Jekyll
-.gitignore            tools/node_modules/, tools/out/
+.gitignore            tools/node_modules/, tools/out/, .vercel, .env*
 ```
 
 Empty folders hold a `.gitkeep` until real files land in them.
@@ -204,8 +213,9 @@ Everything is procedural, with no model or texture downloads.
 
 | Module | What it builds |
 | --- | --- |
-| `index.js` | renderer, scene assembly, damped camera follow, the stage lens shift, the print timeline, pointer parallax, loop, public API |
-| `post.js` | the post chain: render → selective bloom → lens → reduced-motion dissolve → output (see "Post-processing") |
+| `index.js` | renderer, scene assembly, damped camera follow, the stage lens shift, the print timeline, pointer parallax, `tick()` (called by the page's single loop), public API |
+| `quality.js` | adaptive quality: benchmarks under the loader, then steps down (never up) while the frame rate stays under 50 |
+| `post.js` | the post chain: render → selective bloom → lens → reduced-motion dissolve → output → FXAA (see "Post-processing") |
 | `camera-path.js` | the six composed shots (`SHOTS`), the path through them, per-shot values, and `pathClearance(x, z)` |
 | `palette.js` | the §4 palette as linear `THREE.Color`s. **Every world colour comes from here** (or a mix or scale of two palette colours) |
 | `utils.js` | seeded RNG, value noise/fbm (JS + GLSL), `mergeParts` (flat-shaded merge with per-face colours), `tSlotGeometry` (bevelled T-slot extrusion), `patchMaterial` (inject GLSL into built-in materials and keep lighting, fog and instancing) |
@@ -217,7 +227,7 @@ Everything is procedural, with no model or texture downloads.
 | `particles.js` | rain streaks (line segments, shader-driven), drifting filament curls and tumbling voxel leaves (all ambient, on the clock), and embers: a CPU pool born only while the print moves |
 | `atmosphere.js` | blue-charcoal FogExp2 and sky dome, cold moonlight from behind the hall, a cold rim light from behind and above the printer (2.2), cold front fill, amber point lights at the nozzle and the hall, two ground-haze planes |
 
-- **API:** `createWorld(canvas)` returns `{ setProgress(t, { immediate }), setSection(i), resize(), render(), dispose(), onPrint(fn) }`. `render()` draws one frame snapped to the current targets, for stills and tests. `onPrint(fn)` calls `fn(print)` whenever the print moves (the page's layer readout); it only reads the print.
+- **API:** `createWorld(canvas, { requestFrame, settleAfter })` returns `{ setProgress(t, { immediate }), setSection(i), resize(), render(), dispose(), onPrint(fn), tick(dt, now), whenReady }`. The world runs no loop of its own: `main.js` subscribes `tick` to the page's single rAF loop (`ticker.js`, last in order) and passes `wake` as `requestFrame`. `whenReady` resolves once every shader is compiled and the quality benchmark has settled (it waits for `settleAfter`: the fonts and cutouts). `render()` draws one frame snapped to the current targets, for stills and tests. `onPrint(fn)` calls `fn(print)` whenever the print moves (the page's layer readout); it only reads the print.
 - **Particles** (calm): full tier rain 640, curls 26, voxels 30, embers 64; small tier 240 / 12 / 14 / 32. Curls r 0.11, voxels 0.07, ember size 20, rain streaks 0.5 long.
 
 #### One continuous camera path (`camera-path.js`)
@@ -261,6 +271,7 @@ Everything is procedural, with no model or texture downloads.
 
 #### Post-processing (`post.js`)
 
+- **No MSAA:** the composer's half-float targets have `samples: 0`. 4× MSAA there cost more than everything else together (27 → 71 fps without it, desktop, measured; 2× was still 34 fps). **FXAA** (`FXAAShader`, the last pass, on the display-referred image after `OutputPass`) smooths the edges instead.
 - **Bloom** (restrained, nothing smears): `UnrealBloomPass`, strength per shot from the camera's shot: hero 0.32, threshold 0.32, gardens 0.34, craft 0.4, afterlight 0.3, footer 0.22; radius 0.18. Its bright-pass is replaced by a "glow key", so only these bloom:
   - hot cores by luminance (> 0.92): nozzle, sparks, the fresh layer
   - strongly saturated, red-led warm light (saturation > ~0.9, value > ~0.3), gated by depth: the moon (no depth) at a small weight (`uMoon` 0.03), and the hall's paper panels and fascia beyond ~20 units (`uWarm` 0.25; with the toned-down panels this is barely anything). The vermilion filament curls and voxel leaves are as saturated as the moon; the depth gate keeps them from glowing near the lens.
@@ -271,7 +282,9 @@ Everything is procedural, with no model or texture downloads.
   - exposure towards ink, vignette and a darker floor (the old grade)
   - chromatic falloff: red and blue drift apart towards the corners only (`uChroma` 0.0022, about 2 px at a 1440 px corner)
   - film grain, ~2%, in display space. It is the only post effect on the clock (seeded from `state.time`), and it is frozen under reduced motion.
-- **Low-end tier** (`QUALITY.small`: ≤ 768 px or coarse pointer): bloom renders at half its usual resolution (a quarter of the canvas), and the lens is compiled with `CHROMA 0`.
+- **Low-end tier** (`QUALITY.small`: ≤ 768 px or coarse pointer): pixel ratio 1, bloom at half its usual resolution (a quarter of the canvas), and the lens compiled with `CHROMA 0`.
+- **Dissolve source:** the lens (or the dissolve, while it runs) records the buffer it wrote, and `holdFrame()` copies that graded frame. (Before, it copied `composer.readBuffer`, which after the output pass held the ungraded scene: the dissolve started with a visible brightness jump, 30 → 34 mean luma.)
+- `post.warm()` renders once with the dissolve on, so the dissolve and FXAA programs compile under the loader too.
 - **Halftone corners:** `.hero::before` / `.afterlight::before` draw the poster's vermilion halftone at 0.14 opacity in each section's top-left and bottom-right corners. They scroll with the sections, behind their type and above the world. The fixed `.stage::after` halftone covers the other two corners.
 - **Tuned** from screenshots of every section, at 1440×900 and 390×844: the cream fox and the glowing nozzle are the focal points, orange stays the accent. Nothing post-related reads the print state; the print sync checks give identical values before and after.
 
@@ -279,19 +292,40 @@ Everything is procedural, with no model or texture downloads.
 
 - `?debug` in the URL exposes `window.__3dverse = { world, scroll }` and `window.__print = { progress, head, sparks }` (the drawn `uPrint`, the head's position, the live ember count). `world.post` exposes the bloom and lens passes for tuning. `scroll.pathAt(y)` / `scroll.activeAt(y)` / `scroll.anchors()` give the mapping for any scroll position, and `world.path.sample(t, createShotState())` the shot at any t.
 - For stills, call `world.setProgress(t, { immediate: true })`, then `world.render()`, then `canvas.toBlob(...)` in the same task. The desktop app's preview pane runs as a background page and often shows stale frames in screenshots, so don't trust pane screenshots of the canvas.
-- **Performance:** DPR capped at 1.75 (1.25 on small or touch screens). `QUALITY.small` cuts instance counts (grass 900, rain 240, trees 34…). Rendering stops while the tab is hidden. With `prefers-reduced-motion` the ambient motion (particles, sway) freezes and frames render only while a dissolve or exposure change is running. The desktop tier measured about 60 draw calls (post included) and about 52k triangles.
+- **Performance** (see the next section).
+
+#### Performance
+
+- **One loop:** `js/ui/ticker.js` is the only `requestAnimationFrame` loop: the scroll state (order -10), the UI (0) and the world's `tick` (10) run in it, in that order. `wake()` during a frame only marks "another frame wanted" (scheduling there too started duplicate chains: 2,436 draw calls a frame until fixed). The scroll listener is passive and only marks the state dirty; section offsets are measured on load / resize / layout change only.
+- **Renderer:** `antialias: false`, `powerPreference: 'high-performance'`, pixel ratio `min(devicePixelRatio, 1.5)` on desktop and `1` on small screens, no shadows anywhere, no MSAA (FXAA instead). `renderer.debug.checkShaderErrors` only under `?debug` (reading every program's info log forces synchronous compiles).
+- **No mid-scroll compiles:** before `compileAsync`, every hidden object (the molten strand, the embers) is made visible, so its program compiles under the loader; three.js skips invisible objects, and compiling them on first appearance stalled the first scroll 60–140 ms.
+- **Adaptive quality** (`quality.js`), target 50 fps, step down only: 1 pixel ratio (1.5 → 1, or 1 → 0.8) · 2 half-res bloom · 3 chromatic falloff + grain off · 4 particles halved (rain, curls, voxels, spark rate) · 5 bloom + FXAA off. Under the loader it benchmarks after the rest of the page has loaded (0.5 s warm-up, 0.6 s windows, two low readings before a step, ≤ 3 s); afterwards it steps when the last 1.5 s averaged < 50, at most every 2.5 s, never right after the tab returns. `world.quality.level` / `.log` (when, fps, phase) show what happened.
+- **Draw calls:** 61 per frame including post, 49k triangles + 14k line segments desktop (24k / 7.6k on phones); grass, trees, rocks, curls and voxels are `InstancedMesh`, rain one `LineSegments`, embers one `Points`. Nothing allocates per frame (the drift loop and the ember pool write in place).
+- **CSS:** the foreground animates only transform and opacity (the old animated `filter: blur()` on viewport-wide layers is gone); `will-change` is set only while something moves (`.fg.is-moving`, `.hero__title.is-drifting`); no `backdrop-filter`; no CSS `scroll-behavior` (in-page anchors glide through `scrollToHash`).
+- **Measured** (Playwright, headless Chrome on the dev machine's GPU, 10 s top-to-bottom scroll; "live-like" = brotli, Vercel's headers and +150 ms per request, the latency measured to Vercel from here):
+
+  | | before | after |
+  | --- | --- | --- |
+  | desktop 1440×900 | 30 fps, p95 42 ms, 2 long tasks (153 ms) | 88 fps, p95 14 ms, 0 long tasks |
+  | desktop, 4× CPU throttle | 20 fps, 62 long tasks | 65 fps, 0 long tasks (one rung down) |
+  | phone 390×844 | 134 fps | 144 fps |
+  | transfer, cold (desktop / phone) | 924 / 553 KB | 598 / 334 KB |
+  | repeat visit | every file revalidated (44 round trips on Vercel) | Three.js, fonts and cutouts straight from cache; 66 KB over the wire |
+
+- With `prefers-reduced-motion` the ambient motion freezes and frames render only while a dissolve or exposure change runs (the quality controller does not run then). Rendering stops while the tab is hidden.
 - **Colour pipeline:** `NoToneMapping` + `OutputPass` (sRGB), so palette colours land exactly on screen. Keep emissive values modest; see Post-processing for what the glow key lets bloom.
 
 ### Motion (`js/ui/`, vanilla rAF + IntersectionObserver, no libraries)
 
-- **Ticker:** `ticker.js` runs one rAF loop for every eased UI value. `subscribe(fn)`: `fn(dt, now)` returns true while it still needs frames; `wake()` restarts the loop.
-- **Reveals (`reveal.js`):** the head script adds `html.has-reveal`, which pre-hides targets in CSS. If `reveal.js` hasn't set `window.__revealReady` within 3 s, the class is removed, so content never depends on JS; `beforeprint` reveals everything. Targets get `.is-in` and play with the Web Animations API (`fill: 'backwards'`, the `translate` property, so the elements' own CSS transitions are untouched):
+- **Ticker:** `ticker.js` runs the site's single rAF loop (see Performance). `subscribe(fn, order)`: `fn(dt, now)` returns true while it still needs frames; `wake()` restarts the loop.
+- **Reveals (`reveal.js`):** they start when the loader finishes (`initReveal({ ready })`). The head script adds `html.has-reveal`, which pre-hides targets in CSS. If `reveal.js` hasn't set `window.__revealReady` within 3 s, the class is removed, so content never depends on JS; `beforeprint` reveals everything. Targets get `.is-in` and play with the Web Animations API (`fill: 'backwards'`, the `translate` property, so the elements' own CSS transitions are untouched):
   - headings (`.display, .hero__word`): each `.w__i` slides up out of its `.w` clip-path mask, 70 ms stagger, expo-out (`cubic-bezier(0.16, 1, 0.3, 1)`), 1.1 s; the mask gets `.is-home` (clip removed) once the word lands
   - items (eyebrow labels, paragraphs, session rows, the button, the QR, the ticket, footer parts): fade + 16 px rise, 90 ms apart, after the heading
   - rules (`.features, .footer__bottom`): drawn left to right as a background whose width is the registered `@property --rule-x` (border colour set transparent while `.has-reveal`)
   - The selector lists live in `reveal.js` (`HEADINGS`, `RULES`, `ITEMS`) and are repeated in the "Reveals" block of `main.css`: keep both in sync.
 - **Foreground (`foreground.js`, desktop only):** each group (one cutout) is scrubbed from `state.handoff`:
-  - During a handoff the outgoing group fades out and blurs to 12 px, while the incoming one rises 6 vh to full opacity, scaling 0.965 → 1.
+  - During a handoff the outgoing group fades out, while the incoming one rises 6 vh to full opacity, scaling 0.965 → 1 (transform and opacity only; styles are written only when they change).
+  - `preload()` fetches and decodes every desktop cutout during the loader, so none pops in or decodes mid-scroll.
   - While its chapter is active, a group stays pinned at opacity 1.
   - The cutout parallaxes by `--d`: it sinks up to 2 vh × depth as the chapter is read (`--pl`) and follows a fine pointer sideways up to 10 px × depth (`--px`).
 - **Indicators (`indicators.js`):** the progress line eases toward `state.progress`, with a tick at each `state.marks` value that turns orange once passed. One `.nav__underline` slides under the active chapter's link and shrinks away in the hero and on Register, whose pill fills instead. The chapter rail animates in CSS from `aria-current`.
@@ -302,13 +336,13 @@ Everything is procedural, with no model or texture downloads.
   - It hides when the pointer leaves the window.
 - **Reduced motion:**
   - Reveals become plain opacity fades, and rules simply appear.
-  - Foreground groups only crossfade: no rise, blur or parallax.
+  - Foreground groups only crossfade: no rise or parallax.
   - The hero letters don't drift, there is no custom cursor, and the world cuts between shots behind a dissolve.
   - All content stays readable and reachable.
 - **Tested** at 1440×900, with reduced motion, and at 390×844 touch, in headless Chrome via `tools/`' playwright-core:
   - No console errors.
   - After a full scroll, every reveal target is at opacity 1, with every word home and every rule drawn.
-  - Handoffs blur the outgoing group and raise the incoming one.
+  - Handoffs fade the outgoing group out and raise the incoming one.
   - No horizontal overflow on phones.
   - For UI state tests in the preview pane, rAF runs sparsely there: after each `scrollTo({ top, behavior: 'instant' })`, wait two `requestAnimationFrame`s (`html` has smooth scrolling).
 
@@ -316,9 +350,9 @@ Everything is procedural, with no model or texture downloads.
 
 We render every image ourselves: no stock, no placeholders.
 
-- **Run it:** `cd tools && npm install && npm run render` renders everything; `npm run render -- approach ruins` renders just those. Dev dependencies are `playwright-core` and `sharp`, installed only in `tools/`. No browser download is needed: it drives the installed Chrome (`channel: 'chrome'`), headless and GPU-backed.
+- **Run it:** `cd tools && npm install && npm run render` renders everything; `npm run render -- approach ruins` renders just those; `npm run render -- --encode-only [names]` only re-encodes the WebP files from the PNG masters in `tools/out/png` (no rendering). Dev dependencies are `playwright-core` and `sharp`, installed only in `tools/`. No browser download is needed: it drives the installed Chrome (`channel: 'chrome'`), headless and GPU-backed.
 - **How it works:** `render.mjs` serves the repo on a random local port, opens `tools/render-assets.html`, calls `window.renderAsset(name, { scale: 2 })` for each asset, and keeps 2× PNG masters in `tools/out/png`. It then writes WebP:
-  - cutouts: `assets/cutouts/<name>.webp` (2400 w, alpha, q78 / alpha q70) + `-1200`
+  - cutouts: `assets/cutouts/<name>.webp` (1920 w, alpha, q76 / alpha q66) + `-1280` (they are shown at most viewport-wide, mostly sunk, at 0.6 opacity). The page's four cutouts: 379 → 269 KB at 1920 w, 155 KB at 1280 w.
   - stills: `assets/img/<name>.webp` (1600 w, q84) + `-800`
   - previews and `contact-cutouts.jpg` / `contact-stills.jpg` go to `tools/out/` for review.
 - **Harness:** `render-assets.js` renders each subject at 2× (supersampled, half-float target). Cutouts use a transparent clear and are un-premultiplied in the grade, so the PNG has straight alpha. Stills add bloom. Everything passes one grade: neutral tones drift toward ink / char / steel / bone while saturated orange keeps its hue, an optional vignette, then film grain in display space.
@@ -340,15 +374,17 @@ We render every image ourselves: no stock, no placeholders.
 
 ```
 vendor/three/
-  three.module.js        imports ./three.core.js (keep both together)
-  three.core.js
+  three.module.min.js    imports ./three.core.min.js (keep both together)
+  three.core.min.js
   addons/postprocessing/ EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, Pass, MaskPass
-  addons/shaders/        CopyShader, LuminosityHighPassShader, OutputShader
+  addons/shaders/        CopyShader, LuminosityHighPassShader, OutputShader, FXAAShader
 ```
 
-Pass, MaskPass and the three shaders are dependencies of the requested passes. The addons only import `'three'` and relative paths.
+Pass, MaskPass, CopyShader, LuminosityHighPassShader and OutputShader are dependencies of the passes; FXAAShader is the post chain's anti-aliasing. The addons only import `'three'` and relative paths.
 
-To add another addon later, take it from the **same version** (`npm pack three@0.186.1`, then `package/examples/jsm/<path>`). Copy it to `vendor/three/addons/<path>` along with any files it imports relatively. Never mix Three.js versions.
+**Everything here is minified.** three r186's npm package ships no `.min.js` builds, so the files were minified once with esbuild from the package sources (`npx esbuild@0.25.10 <file> --minify --format=esm --legal-comments=inline`, then `three.module.min.js`'s import rewritten to `./three.core.min.js`); same names for the addons. 2.12 MB → 766 KB for the core (before compression).
+
+To add another addon later, take it from the **same version** (`npm pack three@0.186.1`, then `package/examples/jsm/<path>`), minify it the same way into `vendor/three/addons/<path>` along with any files it imports relatively, and add it to the `modulepreload` list in `index.html`. Never mix Three.js versions.
 
 ### uqr 0.1.3 (MIT, from npm; licence at `vendor/uqr/LICENSE`)
 

@@ -4,6 +4,8 @@
 //   world.setSection(i)                  // 0 hero, 1 threshold, 2 still workshop, 3 craft, 4 afterlight, 5 footer
 //   world.resize()
 //   world.render()                       // one synchronous frame snapped to the targets (stills, tests)
+//   world.tick(dt, now)                  // one animation frame; the page's single rAF loop calls it
+//   world.whenReady                      // resolves once shaders are compiled and the quality has settled
 import * as THREE from 'three';
 import { palette } from './palette.js';
 import { clamp, lerp, smoothDamp, smoothstep } from './utils.js';
@@ -16,6 +18,7 @@ import { createPrinter, PRINTER } from './printer.js';
 import { createNature } from './nature.js';
 import { createParticles } from './particles.js';
 import { createPost } from './post.js';
+import { createQuality } from './quality.js';
 
 // Following the scroll: critically damped, so fast scrolling still reads as one slow, precise move.
 const FOLLOW_TIME = 0.7;   // seconds to (mostly) catch up
@@ -38,19 +41,27 @@ const STAGE_MAX = 0.9; // NDC: never slide further than this
 const EXPOSURE = [1, 0.94, 0.9, 0.92, 0.95, 0.66];
 const EXPOSURE_PORTRAIT = [1, 0.9, 0.86, 0.88, 0.88, 0.6];
 
+// dpr: the pixel-ratio cap (the adaptive ladder may lower it further)
 const QUALITY = {
-  full: { dpr: 1.75, samples: 4, terrain: [96, 68], trees: 64, grass: 2600, rocks: 18, rain: 640, curls: 26, voxels: 30, embers: 64 },
-  small: { dpr: 1.25, samples: 0, terrain: [60, 44], trees: 34, grass: 900, rocks: 10, rain: 240, curls: 12, voxels: 14, embers: 32 },
+  full: { dpr: 1.5, terrain: [96, 68], trees: 64, grass: 2600, rocks: 18, rain: 640, curls: 26, voxels: 30, embers: 64 },
+  small: { dpr: 1, terrain: [60, 44], trees: 34, grass: 900, rocks: 10, rain: 240, curls: 12, voxels: 14, embers: 32 },
 };
 
-export function createWorld(canvas) {
+// requestFrame: asks the page's single rAF loop (js/ui/ticker.js) for frames; the world never runs its own.
+// settleAfter: the quality benchmark waits for it (the rest of the loader: fonts, cutout decoding), so
+// it measures the scene, not the page still loading around it.
+export function createWorld(canvas, { requestFrame = () => {}, settleAfter = Promise.resolve() } = {}) {
   const small = matchMedia('(max-width: 768px), (pointer: coarse)').matches;
   const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const quality = small ? QUALITY.small : QUALITY.full;
 
+  // antialias off: the composer's targets carry no MSAA either; FXAA at the end of the post chain smooths edges
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.dpr));
+  const baseDpr = Math.min(window.devicePixelRatio || 1, quality.dpr);
+  renderer.setPixelRatio(baseDpr);
   renderer.toneMapping = THREE.NoToneMapping; // keeps palette colours exact on screen
+  // reading every program's info log forces synchronous compile checks; only under ?debug
+  renderer.debug.checkShaderErrors = new URLSearchParams(location.search).has('debug');
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
@@ -70,7 +81,7 @@ export function createWorld(canvas) {
   for (const part of parts) scene.add(part.group);
 
   // post: render -> selective bloom -> lens (haze, split tone, exposure, vignette, chroma, grain) -> output
-  const post = createPost({ renderer, scene, camera, palette, quality, small });
+  const post = createPost({ renderer, scene, camera, palette, small });
   const { composer, bloom, lens, crossfade } = post;
   let fade = 0;
 
@@ -159,9 +170,9 @@ export function createWorld(canvas) {
   let targetProgress = 0;
   let targetExposure = 1;
   let exposure = targetExposure;
-  let raf = 0;
-  let last = 0;
   let ready = false;
+  let resolveReady;
+  const whenReady = new Promise((resolve) => { resolveReady = resolve; });
 
   function step(dt, snap = false) {
     if (state.reduced) {
@@ -218,29 +229,23 @@ export function createWorld(canvas) {
     lens.uniforms.uSeed.value = state.reduced ? 0 : (state.time * 24) % 997; // frozen under reduced motion
   }
 
-  function frame(now) {
-    raf = 0;
-    const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
-    last = now;
+  // one animation frame, called by the page's single rAF loop; returns whether it wants another
+  function tick(dt, now) {
+    if (!ready) return false;
     state.dt = dt;
     if (!state.reduced) state.time += dt;
     step(dt);
     composer.render(dt);
-
-    // reduced motion: render on demand only, until the dissolve and the exposure settle
-    const settled = fade === 0 && Math.abs(targetExposure - exposure) < 1e-3;
-    if (!document.hidden && (!state.reduced || !settled)) raf = requestAnimationFrame(frame);
+    if (state.reduced) {
+      // reduced motion: render on demand only, until the dissolve and the exposure settle
+      return !(fade === 0 && Math.abs(targetExposure - exposure) < 1e-3);
+    }
+    qualityControl.frame(now);
+    return true;
   }
 
   function start() {
-    if (raf || !ready || document.hidden) return;
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
-
-  function stop() {
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
+    if (ready) requestFrame();
   }
 
   function resize() {
@@ -287,29 +292,39 @@ export function createWorld(canvas) {
     composer.render(0);
   }
 
-  const onVisibility = () => (document.hidden ? stop() : start());
-  document.addEventListener('visibilitychange', onVisibility);
   const onMotionPref = (event) => { state.reduced = event.matches; start(); };
   reducedQuery.addEventListener('change', onMotionPref);
   const resizeObserver = new ResizeObserver(() => resize());
   resizeObserver.observe(canvas);
-  canvas.addEventListener('webglcontextlost', (event) => { event.preventDefault(); stop(); ready = false; });
+  canvas.addEventListener('webglcontextlost', (event) => { event.preventDefault(); ready = false; });
+
+  // adaptive quality: steps down (never up) while the frame rate stays under 50 (js/world/quality.js)
+  const qualityControl = createQuality({ renderer, post, particles, resize, baseDpr });
 
   resize();
   step(0);
+  // Compile every program before the page is shown, including objects that start hidden (the molten
+  // strand, the embers): three.js skips invisible objects, and compiling them on first appearance
+  // stalled the first scroll for 60-140 ms. Then the post programs (dissolve and FXAA included).
+  const hidden = [];
+  scene.traverse((o) => { if (!o.visible) { hidden.push(o); o.visible = true; } });
   renderer.compileAsync(scene, camera).catch(() => {}).then(() => {
-    ready = true;
     composer.render(0);
+    for (const o of hidden) o.visible = false;
+    post.warm();
+    ready = true;
     canvas.classList.add('is-ready');
     start();
+    // settle the quality while the loader is still up (reduced motion renders on demand: nothing to measure)
+    if (state.reduced) resolveReady();
+    else settleAfter.catch(() => {}).then(() => qualityControl.benchmark()).then(() => resolveReady());
   });
 
   function dispose() {
-    stop();
+    ready = false;
     resizeObserver.disconnect();
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerout', onPointerOut);
-    document.removeEventListener('visibilitychange', onVisibility);
     reducedQuery.removeEventListener('change', onMotionPref);
     post.dispose();
     renderer.dispose();
@@ -317,5 +332,5 @@ export function createWorld(canvas) {
 
   const onPrint = (fn) => { printListener = fn; printAnnounced = false; start(); };
 
-  return { setProgress, setSection, resize, render, dispose, onPrint, renderer, scene, camera, state, shot, path, printer, particles, post };
+  return { setProgress, setSection, resize, render, dispose, onPrint, tick, whenReady, quality: qualityControl, renderer, scene, camera, state, shot, path, printer, particles, post };
 }

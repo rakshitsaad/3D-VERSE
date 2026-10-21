@@ -54,15 +54,12 @@ export function initCursor() {
     wake();
   }, { passive: true });
 
-  // the page can scroll under a still pointer: re-check what's beneath it
-  let scrollQueued = false;
+  // the page can scroll under a still pointer: re-check what's beneath it (on the next frame)
+  let scrolled = false;
   window.addEventListener('scroll', () => {
-    if (!showing || scrollQueued) return;
-    scrollQueued = true;
-    requestAnimationFrame(() => {
-      scrollQueued = false;
-      setMode(document.elementFromPoint(goal.x, goal.y));
-    });
+    if (!showing) return;
+    scrolled = true;
+    wake();
   }, { passive: true });
 
   window.addEventListener('pointerout', (event) => { if (!event.relatedTarget) show(false); });
@@ -73,6 +70,10 @@ export function initCursor() {
 
   subscribe((dt) => {
     if (!showing) return false;
+    if (scrolled) {
+      scrolled = false;
+      setMode(document.elementFromPoint(goal.x, goal.y));
+    }
     const k = 1 - Math.exp(-dt * 14);
     pos.x += (goal.x - pos.x) * k;
     pos.y += (goal.y - pos.y) * k;

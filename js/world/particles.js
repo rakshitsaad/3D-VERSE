@@ -87,14 +87,16 @@ export function createParticles({ palette, quality }) {
   const pos = new THREE.Vector3();
   const scl = new THREE.Vector3();
   const mat = new THREE.Matrix4();
+  const AXES = ['x', 'y', 'z']; // shared: nothing is allocated per frame
   function drift({ mesh, items }, time, dt) {
-    for (let i = 0; i < items.length; i++) {
+    for (let i = 0; i < mesh.count; i++) {
       const it = items[i];
       it.p.x += (0.35 + Math.sin(time * 0.7 + it.phase) * 0.25) * dt;
       it.p.y += (-0.16 + Math.cos(time * 0.9 + it.phase) * 0.12) * dt;
       it.p.z += Math.sin(time * 0.5 + it.phase * 1.3) * 0.15 * dt;
       // wrap inside the region
-      for (const axis of ['x', 'y', 'z']) {
+      for (let a = 0; a < 3; a++) {
+        const axis = AXES[a];
         const lo = region.min[axis], span = region.size[axis];
         if (it.p[axis] < lo) it.p[axis] += span;
         else if (it.p[axis] > lo + span) it.p[axis] -= span;
@@ -154,14 +156,16 @@ export function createParticles({ palette, quality }) {
       }`,
   });
   let spawnDebt = 0;
+  let density = 1; // the quality ladder can thin everything out (setDensity)
   let nextSlot = 0;
   let live = 0;
   function emit(origin) {
     const i = nextSlot;
     nextSlot = (nextSlot + 1) % sparks;
     const a = rng() * Math.PI * 2, out = 0.4 + rng() * 1.4;
-    ePos.set([origin.x + (rng() - 0.5) * 0.06, origin.y, origin.z + (rng() - 0.5) * 0.06], i * 3);
-    eVel.set([Math.cos(a) * out, 0.6 + rng() * 1.8, Math.sin(a) * out], i * 3);
+    const k = i * 3; // written in place: no arrays per spark
+    ePos[k] = origin.x + (rng() - 0.5) * 0.06; ePos[k + 1] = origin.y; ePos[k + 2] = origin.z + (rng() - 0.5) * 0.06;
+    eVel[k] = Math.cos(a) * out; eVel[k + 1] = 0.6 + rng() * 1.8; eVel[k + 2] = Math.sin(a) * out;
     eSpan[i] = 0.35 + rng() * 0.25;
     eLife[i] = 0;
   }
@@ -169,7 +173,7 @@ export function createParticles({ palette, quality }) {
     const dt = state.dt;
     const rate = state.reduced ? 0 : Math.max(0, state.sparkRate ?? 0);
     if (rate > 0 && dt > 0) {
-      spawnDebt += rate * SPARK_RATE * dt;
+      spawnDebt += rate * SPARK_RATE * density * dt;
       for (; spawnDebt >= 1; spawnDebt -= 1) emit(state.nozzle);
     } else {
       spawnDebt = 0;
@@ -201,6 +205,15 @@ export function createParticles({ palette, quality }) {
   return {
     group,
     get liveSparks() { return live; },
+    // fewer particles (adaptive quality): rain streaks, curls and voxels drawn, and the spark rate
+    setDensity(f) {
+      if (f === density) return false;
+      density = f;
+      rainGeo.setDrawRange(0, Math.max(2, Math.floor(drops * f) * 2));
+      curls.mesh.count = Math.max(1, Math.floor(quality.curls * f));
+      voxels.mesh.count = Math.max(1, Math.floor(quality.voxels * f));
+      return true;
+    },
     update(state) {
       uTime.value = state.time;
       rain.material.uniforms.uOpacity.value = 0.3 * Math.min(1, 0.4 + 0.6 * state.lights); // quieter when the lights drop

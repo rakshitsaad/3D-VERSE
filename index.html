@@ -7,25 +7,66 @@
   <meta name="description" content="3DVERSE, Event 01 · 2026. A one-day 3D printing event by the IoT &amp; Robotics Club, Bennett University. Nov 15, 2026 · 10:00 AM – 4:00 PM · Tech Lab 3.">
   <meta name="theme-color" content="#0A0A0B">
   <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
+  <!-- only the display font is preloaded (the loader's wordmark and the hero title use it) -->
   <link rel="preload" href="fonts/anton/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/space-grotesk/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/jetbrains-mono/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/main.css">
   <script>
     document.documentElement.classList.add('js', 'has-reveal');
-    // failsafe: if the reveal module hasn't taken over in time, show everything
+    // failsafes: if the reveal module or the loader haven't finished in time, show everything anyway
     setTimeout(function () { if (!window.__revealReady) document.documentElement.classList.remove('has-reveal'); }, 3000);
+    setTimeout(function () { document.documentElement.classList.add('is-loaded'); }, 15000);
   </script>
   <script type="importmap">
   {
     "imports": {
-      "three": "./vendor/three/three.module.js",
+      "three": "./vendor/three/three.module.min.js",
       "three/addons/": "./vendor/three/addons/",
       "uqr": "./vendor/uqr/index.mjs"
     }
   }
   </script>
+  <!-- the whole module graph, fetched in parallel instead of import by import (no bundler: plain modules).
+       Keep this list in sync with the imports. -->
+  <link rel="modulepreload" href="js/main.js">
+  <link rel="modulepreload" href="js/config.js">
+  <link rel="modulepreload" href="js/ui/loader.js">
+  <link rel="modulepreload" href="js/ui/ticker.js">
+  <link rel="modulepreload" href="js/ui/nav.js">
+  <link rel="modulepreload" href="js/ui/scroll.js">
+  <link rel="modulepreload" href="js/ui/qr.js">
+  <link rel="modulepreload" href="js/ui/foreground.js">
+  <link rel="modulepreload" href="js/ui/reveal.js">
+  <link rel="modulepreload" href="js/ui/indicators.js">
+  <link rel="modulepreload" href="js/ui/hero.js">
+  <link rel="modulepreload" href="js/ui/cursor.js">
+  <link rel="modulepreload" href="vendor/uqr/index.mjs">
+  <link rel="modulepreload" href="js/world/index.js">
+  <link rel="modulepreload" href="js/world/post.js">
+  <link rel="modulepreload" href="js/world/quality.js">
+  <link rel="modulepreload" href="js/world/palette.js">
+  <link rel="modulepreload" href="js/world/utils.js">
+  <link rel="modulepreload" href="js/world/camera-path.js">
+  <link rel="modulepreload" href="js/world/atmosphere.js">
+  <link rel="modulepreload" href="js/world/terrain.js">
+  <link rel="modulepreload" href="js/world/moon.js">
+  <link rel="modulepreload" href="js/world/lab.js">
+  <link rel="modulepreload" href="js/world/printer.js">
+  <link rel="modulepreload" href="js/world/nature.js">
+  <link rel="modulepreload" href="js/world/particles.js">
+  <link rel="modulepreload" href="vendor/three/three.module.min.js">
+  <link rel="modulepreload" href="vendor/three/three.core.min.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/EffectComposer.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/RenderPass.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/UnrealBloomPass.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/ShaderPass.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/OutputPass.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/Pass.js">
+  <link rel="modulepreload" href="vendor/three/addons/postprocessing/MaskPass.js">
+  <link rel="modulepreload" href="vendor/three/addons/shaders/CopyShader.js">
+  <link rel="modulepreload" href="vendor/three/addons/shaders/LuminosityHighPassShader.js">
+  <link rel="modulepreload" href="vendor/three/addons/shaders/OutputShader.js">
+  <link rel="modulepreload" href="vendor/three/addons/shaders/FXAAShader.js">
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
@@ -69,6 +110,15 @@
 
   </defs>
 </svg>
+
+<!-- Loader: wordmark and an orange progress line until fonts, the scene, its shaders and the cutouts are
+     ready, so nothing pops in or compiles mid-scroll (js/ui/loader.js; failsafe in the head) -->
+<div class="loader" aria-hidden="true">
+  <div class="loader__inner">
+    <span class="loader__mark">3DVERSE</span>
+    <span class="loader__bar"><span class="loader__fill" data-loader-fill></span></span>
+  </div>
+</div>
 
 <a class="skip" href="#main">Skip to content</a>
 
