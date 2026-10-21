@@ -1,5 +1,6 @@
-// Custom cursor, only for a fine pointer: a small ring that follows with an eased lag, grows over links
-// and buttons, and over cards fills orange with "View" (or "Play" on the film card, via data-cursor).
+// Custom cursor, only for a fine pointer: a small ring that follows with an eased lag and grows over links
+// and buttons. A label ring (orange, with the data-cursor text) shows only over a real link or button
+// that asks for one; nothing else ever gets a label.
 // The native cursor is hidden only while the ring is actually showing (html.has-cursor), and comes back
 // when the pointer leaves the window or stops being fine. Off under prefers-reduced-motion.
 import { subscribe, wake } from './ticker.js';
@@ -31,13 +32,13 @@ export function initCursor() {
   }
 
   function setMode(target) {
-    const card = target?.closest?.('[data-cursor]');
     const link = target?.closest?.(LINKS);
-    const next = card ? card.dataset.cursor : link ? 'link' : '';
+    const text = link?.dataset.cursor || '';
+    const next = text ? `label:${text}` : link ? 'link' : '';
     if (next === mode) return;
     mode = next;
-    el.dataset.mode = next;
-    label.textContent = next === 'view' ? 'View' : next === 'play' ? 'Play' : '';
+    el.dataset.mode = text ? 'label' : next;
+    label.textContent = text;
   }
 
   window.addEventListener('pointermove', (event) => {

@@ -1,11 +1,11 @@
-// Foreground cutouts: one group of 2-3 layers per chapter (index.html, .foreground), fixed to the bottom
-// of the viewport and scrubbed by the shared scroll state:
+// Foreground cutouts (desktop only): one sunk, translucent cutout per chapter (index.html, .foreground),
+// fixed to the bottom of the viewport and scrubbed by the shared scroll state:
 //   arrive   during the handoff into a chapter its group rises ~6vh to full opacity with a slight scale
 //   pinned   while the chapter is active the group holds still; layers only parallax a little by depth
 //            (sinking as the chapter is read, and following a fine pointer sideways)
 //   leave    during the handoff to the next chapter the group fades and blurs away (up to 12px)
 // Under prefers-reduced-motion the groups only crossfade: no rise, blur or parallax.
-// Images load when their group is active, arriving, or next.
+// Images load when their group is active, arriving, or next; on phones the layer is hidden and nothing loads.
 import { subscribe, wake } from './ticker.js';
 
 const DIR = 'assets/cutouts/';
@@ -20,6 +20,7 @@ export function initForeground() {
   if (!root || !groups.length) return () => {};
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const phone = matchMedia('(max-width: 640px)');
 
   function load(i) {
     groups[i]?.querySelectorAll('img[data-cutout]').forEach((img) => {
@@ -75,6 +76,7 @@ export function initForeground() {
   });
 
   return function update(state) {
+    if (phone.matches) return;
     load(state.active);
     load(state.active + 1);
     if (state.handoff) load(state.handoff.to);

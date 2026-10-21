@@ -60,7 +60,7 @@ const LensShader = {
     uShadowTone: { value: new THREE.Color() },
     uLightTone: { value: new THREE.Color() },
     uChroma: { value: 0.0022 },
-    uGrain: { value: 0.04 },
+    uGrain: { value: 0.02 },
     uSeed: { value: 0 },
     uResolution: { value: new THREE.Vector2(1, 1) },
   },
@@ -109,7 +109,7 @@ const LensShader = {
       v *= 1.0 - uFloor * smoothstep(0.45, 0.0, vUv.y);
       c.rgb = mix(uInk, c.rgb, clamp(uExposure * v, 0.0, 1.0));
 
-      // film grain in display space (so it is even across the tones), ~4%
+      // film grain in display space (so it is even across the tones), ~2%
       vec3 s = pow(max(c.rgb, 0.0), vec3(1.0 / 2.2));
       float g = hash(floor(vUv * uResolution) + uSeed * 91.7) - 0.5;
       s += g * uGrain * (1.0 - 0.5 * s);
@@ -145,15 +145,15 @@ export function createPost({ renderer, scene, camera, palette, quality, small })
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
 
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.45, 0.32, 0);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.32, 0.18, 0);
   bloom.materialHighPassFilter.fragmentShader = GLOW_KEY;
   bloom.materialHighPassFilter.uniforms = bloom.highPassUniforms = {
     tDiffuse: { value: null },
-    uCore: { value: 0.88 },
+    uCore: { value: 0.92 },
     tDepth: { value: null },
-    uWarm: { value: 0.45 },
+    uWarm: { value: 0.25 },
     uWarmFrom: { value: 0.28 },
-    uMoon: { value: 0.06 },
+    uMoon: { value: 0.03 },
     uNear: { value: camera.near },
     uFar: { value: camera.far },
     luminosityThreshold: { value: 0 }, // written by UnrealBloomPass every frame; unused by the glow key

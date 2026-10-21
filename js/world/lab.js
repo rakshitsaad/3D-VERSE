@@ -68,7 +68,7 @@ export function createLab({ palette }) {
   const c = new THREE.Color();
   for (let i = 0; i < gp.count; i++) {
     const t = (gp.getY(i) + glowH / 2) / glowH;
-    c.copy(palette.amber).lerp(palette.vermilion, t * 0.7).multiplyScalar(0.8 * (1 - t * 0.6));
+    c.copy(palette.amber).lerp(palette.vermilion, t * 0.7).lerp(palette.bone, 0.1).multiplyScalar(0.4 * (1 - t * 0.6));
     glowColors.set([c.r, c.g, c.b], i * 3);
   }
   glowGeo.setAttribute('color', new THREE.BufferAttribute(glowColors, 3));
@@ -76,7 +76,8 @@ export function createLab({ palette }) {
   glow.position.set(0, FLOOR + glowH / 2, -D / 2 + 0.02);
 
   // paper: the transom across the full front, and the lower panels of the closed bays
-  const paperColor = palette.amber.clone().lerp(palette.vermilion, 0.2).multiplyScalar(0.56);
+  // held back (a touch of cream, about half the light) so the hall glows behind the printer, not over it
+  const paperColor = palette.amber.clone().lerp(palette.vermilion, 0.2).lerp(palette.bone, 0.12).multiplyScalar(0.3);
   const paperMat = new THREE.MeshBasicMaterial({ color: paperColor });
   const lowerPaperMat = new THREE.MeshBasicMaterial({ color: paperColor.clone().multiplyScalar(0.7) });
   const transomY = FLOOR + LOWER_H + 0.12 + TRANSOM_H / 2;
@@ -106,7 +107,7 @@ export function createLab({ palette }) {
 
   const roof = new THREE.Mesh(roofGeometry(), frameMat);
   roof.position.y = FLOOR + H;
-  const fascia = new THREE.Mesh(new THREE.BoxGeometry(W + 3.4, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: palette.vermilion }));
+  const fascia = new THREE.Mesh(new THREE.BoxGeometry(W + 3.4, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: palette.vermilion.clone().multiplyScalar(0.46) }));
   fascia.position.set(0, FLOOR + H + 0.37, 6.2);
 
   // small printers in the open bays, dark against the glow, each with a lit nozzle

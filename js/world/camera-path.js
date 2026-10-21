@@ -8,37 +8,47 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep } from './utils.js';
 
 // The fox is printed from the bed up; nozzle sits at y = 4.43 + 2.4 * print, x/z near (0, -6.9).
+// stage / stagePortrait: where the fox sits on screen (NDC x, y) on landscape and portrait screens. The
+// world slides the image there (a lens shift), so the printer stays in the open stage zone opposite the
+// text column: centred above the title in the hero, the right third in the desktop chapters, the upper
+// half on phones. Positions and targets are unchanged by it, so the clearances still hold.
 export const SHOTS = [
   {
     name: 'hero', // wide and low: the gantry framed like a gate, the moon behind it
     position: [0, 3.0, 31], target: [0, 4.2, -20], fov: 40,
-    fog: 0.0145, moon: [0, 24, -105], bloom: 0.45, print: 0.15, park: 0, haze: 1, lights: 1, sparks: 0.6,
+    fog: 0.0102, moon: [0, 24, -105], bloom: 0.32, print: 0.15, park: 0, haze: 0.7, lights: 1, sparks: 0.6,
+    stage: [0, 0.12], stagePortrait: [0, 0.3],
   },
   {
     name: 'threshold', // a slow push up the printed slabs towards the gate
     position: [1.2, 2.7, 15.5], target: [0, 6.6, -6.9], fov: 42,
-    fog: 0.015, moon: [2, 26, -105], bloom: 0.45, print: 0.35, park: 0, haze: 1, lights: 1, sparks: 0.8,
+    fog: 0.0105, moon: [2, 26, -105], bloom: 0.32, print: 0.35, park: 0, haze: 0.7, lights: 1, sparks: 0.8,
+    stage: [0.36, 0.02], stagePortrait: [0, 0.4],
   },
   {
     name: 'gardens', // drifting sideways through filament grass and pines, the hall glowing beyond
     position: [-7.6, 2.8, 5.0], target: [2.5, 5.6, -22], fov: 44,
-    fog: 0.017, moon: [14, 24, -105], bloom: 0.5, print: 0.55, park: 0, haze: 1.3, lights: 1.1, sparks: 0.7,
+    fog: 0.012, moon: [14, 24, -105], bloom: 0.34, print: 0.55, park: 0, haze: 0.9, lights: 1.1, sparks: 0.7,
+    stage: [0.36, 0.02], stagePortrait: [0, 0.4],
   },
   {
-    name: 'craft', // a close orbit round the print head: nozzle glow and sparks
-    position: [3.7, 7.5, -2.4], target: [0, 6.3, -6.9], fov: 40,
-    fog: 0.013, moon: [-6, 27, -100], bloom: 0.55, print: 0.85, park: 0, haze: 0.8, lights: 1.1, sparks: 1.5,
-    via: [{ position: [-2.6, 8.2, -2.2], target: [0, 6.6, -6.9] }], // the orbit continues past the head's front
+    name: 'craft', // an orbit round the print head, pulled back far enough to leave the text column clear
+    position: [6.3, 8.3, 0.75], target: [0, 6.3, -6.9], fov: 40,
+    fog: 0.0092, moon: [-6, 27, -100], bloom: 0.4, print: 0.85, park: 0, haze: 0.55, lights: 1.1, sparks: 1.5,
+    stage: [0.34, 0.04], stagePortrait: [0, 0.36],
+    via: [{ position: [-4.2, 9.3, 0.6], target: [0, 6.6, -6.9] }], // the orbit continues past the head's front
   },
   {
     name: 'afterlight', // pull back: the whole gate and the finished fox against the moon
     position: [0, 6.0, 19], target: [0, 9.0, -6.9], fov: 44,
-    fog: 0.012, moon: [0, 25, -82], bloom: 0.42, print: 1, park: 1, haze: 0.9, lights: 0.85, sparks: 0.3,
+    fog: 0.0085, moon: [0, 25, -82], bloom: 0.3, print: 1, park: 1, haze: 0.62, lights: 0.85, sparks: 0.3,
+    stage: [0.36, 0.0], stagePortrait: [0, 0.38],
   },
   {
     name: 'footer', // high and quiet, looking down through thick haze, lights low
     position: [0, 34, 9], target: [0, 2, -10], fov: 38,
-    fog: 0.022, moon: [0, 25, -82], bloom: 0.35, print: 1, park: 1, haze: 2.0, lights: 0.35, sparks: 0.1,
+    fog: 0.0155, moon: [0, 25, -82], bloom: 0.22, print: 1, park: 1, haze: 1.4, lights: 0.35, sparks: 0.1,
+    stage: [0.3, 0.0], stagePortrait: [0, 0.36],
   },
 ];
 
@@ -86,6 +96,8 @@ export function createCameraPath() {
     out.lights = lerp(a.lights, b.lights, f);
     out.sparks = lerp(a.sparks, b.sparks, f);
     out.moon.lerpVectors(moons[i], moons[i + 1], f);
+    out.stage.set(lerp(a.stage[0], b.stage[0], f), lerp(a.stage[1], b.stage[1], f));
+    out.stagePortrait.set(lerp(a.stagePortrait[0], b.stagePortrait[0], f), lerp(a.stagePortrait[1], b.stagePortrait[1], f));
     // the print finishes a little before the next shot; the head lifts away only at the very end
     out.print = lerp(a.print, b.print, smoothstep(0, 0.85, f));
     out.park = lerp(a.park, b.park, smoothstep(0.7, 1, f));
@@ -98,6 +110,7 @@ export function createCameraPath() {
 export function createShotState() {
   return {
     position: new THREE.Vector3(), target: new THREE.Vector3(), moon: new THREE.Vector3(),
+    stage: new THREE.Vector2(), stagePortrait: new THREE.Vector2(),
     shot: 0, fov: 40, fog: 0, bloom: 0, haze: 1, lights: 1, sparks: 1, print: 0, park: 0,
   };
 }

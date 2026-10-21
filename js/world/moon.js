@@ -1,5 +1,6 @@
 // The poster's orange circle as a vermilion moon behind the hall: halftone-dot craters, limb darkening,
-// a soft rim and a faint halo. Unlit and unfogged so its colour stays exactly --vermilion.
+// a soft rim and a faint halo. Unlit and unfogged so its colour is exactly its own: vermilion held back
+// (a little cream, ~70% brightness), so the moon frames the scene instead of owning it.
 import * as THREE from 'three';
 import { GLSL_NOISE } from './utils.js';
 
@@ -7,6 +8,9 @@ export const MOON_POSITION = new THREE.Vector3(0, 24, -105);
 const RADIUS = 22;
 
 export function createMoon({ palette }) {
+  // the poster's orange, held back so the cream fox and the nozzle lead: a touch of cream (less saturated),
+  // then ~70% display brightness (0.46 in linear light)
+  const MOON_COLOR = palette.vermilion.clone().lerp(palette.bone, 0.12).multiplyScalar(0.46);
   const group = new THREE.Group();
   group.name = 'moon';
   group.position.copy(MOON_POSITION);
@@ -18,7 +22,7 @@ export function createMoon({ palette }) {
       depthWrite: false,
       fog: false,
       uniforms: {
-        uColor: { value: palette.vermilion },
+        uColor: { value: MOON_COLOR },
         uDark: { value: palette.ink },
         uDots: { value: 44 },
       },
@@ -63,7 +67,7 @@ export function createMoon({ palette }) {
       depthWrite: false,
       fog: false,
       blending: THREE.AdditiveBlending,
-      uniforms: { uColor: { value: palette.vermilion }, uStrength: { value: 0.1 } },
+      uniforms: { uColor: { value: MOON_COLOR }, uStrength: { value: 0.05 } },
       vertexShader: /* glsl */ `
         varying vec2 vUv;
         void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,

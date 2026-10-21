@@ -41,10 +41,6 @@
     <symbol id="i-arrow" viewBox="0 0 34 18">
       <path d="M0 9h30M22.5 1.5 30.5 9l-8 7.5" fill="none" stroke="currentColor" stroke-width="3"/>
     </symbol>
-    <symbol id="i-play" viewBox="0 0 64 64">
-      <circle cx="32" cy="32" r="31" fill="none" stroke="currentColor"/>
-      <path d="M27 22.5 41 32l-14 9.5z" fill="currentColor"/>
-    </symbol>
     <symbol id="i-cal" viewBox="0 0 24 24">
       <path d="M3.5 5.5h17v15h-17zM3.5 10h17M8 3v5M16 3v5" fill="none" stroke="currentColor" stroke-width="1.6"/>
     </symbol>
@@ -79,35 +75,19 @@
 <!-- Backdrop: CSS gradient fallback with the WebGL world on top once it is ready -->
 <div class="stage" aria-hidden="true"><canvas class="world" data-world></canvas></div>
 
-<!-- Foreground cutouts: one group per chapter, fixed to the bottom of the viewport, faded in by the scroll
-     state. Layers run back to front; --w width and --x centre offset (vw), --shade depth brightness,
-     --d parallax depth, --b bottom offset, --flip mirrors. Sources are assigned by js/ui/foreground.js when a group is near. -->
+<!-- Foreground cutouts (desktop only): one per chapter, sunk into the bottom ~18% of the viewport so it
+     frames the scene instead of covering it. --w width (vw), --x centre offset (vw), --b bottom offset
+     (negative sinks it), --flip mirrors. Sources are assigned by js/ui/foreground.js when a group is near. -->
 <div class="foreground" aria-hidden="true">
-  <div class="fg" data-fg>
-    <img class="fg__layer" data-cutout="low-poly-pines" style="--w: 124vw; --x: 0vw; --shade: 0.63; --d: 0.25; --b: -6vh" sizes="(max-width: 640px) 224vw, 124vw" width="2400" height="1000" alt="">
-    <img class="fg__layer" data-cutout="orange-filament-branch" style="--w: 64vw; --x: -24vw; --shade: 1.00; --d: 0.6" sizes="(max-width: 640px) 116vw, 64vw" width="2400" height="1000" alt="">
-    <img class="fg__layer" data-cutout="filament-grass" style="--w: 112vw; --x: 0vw; --d: 1; --b: -7vh" sizes="(max-width: 640px) 202vw, 112vw" width="2400" height="700" alt="">
-  </div>
-  <div class="fg" data-fg>
-    <img class="fg__layer" data-cutout="printed-wall" style="--w: 120vw; --x: 4vw; --shade: 0.68; --d: 0.3" sizes="(max-width: 640px) 216vw, 120vw" width="2400" height="800" alt="">
-    <img class="fg__layer" data-cutout="voxel-stones" style="--w: 108vw; --x: -2vw; --d: 0.9" sizes="(max-width: 640px) 196vw, 108vw" width="2400" height="800" alt="">
-  </div>
-  <div class="fg" data-fg>
-    <img class="fg__layer" data-cutout="wire-hills" style="--w: 126vw; --x: 0vw; --shade: 0.48; --d: 0.2; --b: -10vh" sizes="(max-width: 640px) 228vw, 126vw" width="2400" height="900" alt="">
-    <img class="fg__layer" data-cutout="support-bushes" style="--w: 112vw; --x: 2vw; --shade: 0.93; --d: 0.55" sizes="(max-width: 640px) 202vw, 112vw" width="2400" height="900" alt="">
-    <img class="fg__layer" data-cutout="filament-grass" style="--w: 112vw; --x: 0vw; --d: 1; --flip: -1" sizes="(max-width: 640px) 202vw, 112vw" width="2400" height="700" alt="">
-  </div>
-  <div class="fg" data-fg>
-    <img class="fg__layer" data-cutout="nozzle-lanterns" style="--w: 118vw; --x: 0vw; --shade: 0.83; --d: 0.35" sizes="(max-width: 640px) 212vw, 118vw" width="2400" height="1000" alt="">
-    <img class="fg__layer" data-cutout="spool-stack" style="--w: 100vw; --x: -4vw; --d: 0.8" sizes="(max-width: 640px) 180vw, 100vw" width="2400" height="900" alt="">
-    <img class="fg__layer" data-cutout="voxel-stones" style="--w: 110vw; --x: 0vw; --d: 1; --flip: -1" sizes="(max-width: 640px) 198vw, 110vw" width="2400" height="800" alt="">
-  </div>
-  <div class="fg" data-fg>
-    <img class="fg__layer" data-cutout="wire-hills" style="--w: 110vw; --x: 0vw; --shade: 0.38; --d: 0.2; --b: -14vh; --flip: -1" sizes="(max-width: 640px) 198vw, 110vw" width="2400" height="900" alt="">
-    <img class="fg__layer" data-cutout="ruins" style="--w: 108vw; --x: 0vw; --shade: 0.98; --d: 0.6" sizes="(max-width: 640px) 196vw, 108vw" width="2400" height="900" alt="">
-    <img class="fg__layer" data-cutout="orange-filament-branch" style="--w: 64vw; --x: 24vw; --d: 1; --flip: -1" sizes="(max-width: 640px) 116vw, 64vw" width="2400" height="1000" alt="">
-  </div>
+  <div class="fg" data-fg><img class="fg__layer" data-cutout="filament-grass" style="--w: 100vw; --b: -5vh; --d: 1" sizes="100vw" width="2400" height="700" alt=""></div>
+  <div class="fg" data-fg><img class="fg__layer" data-cutout="voxel-stones" style="--w: 100vw; --b: -14vh; --d: 1" sizes="100vw" width="2400" height="800" alt=""></div>
+  <div class="fg" data-fg><img class="fg__layer" data-cutout="filament-grass" style="--w: 100vw; --b: -5vh; --d: 1; --flip: -1" sizes="100vw" width="2400" height="700" alt=""></div>
+  <div class="fg" data-fg><img class="fg__layer" data-cutout="printed-wall" style="--w: 100vw; --b: -4vh; --d: 1" sizes="100vw" width="2400" height="800" alt=""></div>
+  <div class="fg" data-fg><img class="fg__layer" data-cutout="ruins" style="--w: 100vw; --b: -12vh; --d: 1; --flip: -1" sizes="100vw" width="2400" height="900" alt=""></div>
 </div>
+
+<!-- Text-side scrim: a soft dark gradient only behind the text column (bottom on phones and in the hero) -->
+<div class="scrim" aria-hidden="true"></div>
 
 <header class="nav" data-nav data-inert-when-menu>
   <a class="brand" href="#hero">
@@ -167,10 +147,17 @@
 
 <div class="progress" aria-hidden="true"><span class="progress__bar" data-progress></span></div>
 
+<!-- The one tiny readout: the print's current layer, written from the print timeline -->
+<p class="layer-readout" aria-hidden="true">Layer <span data-layer>0000</span> / 1000</p>
+
 <main id="main" data-inert-when-menu>
 
+  <!-- Every section is: a breathing stretch (only the 3D scene on screen) / one screen of content in a
+       narrow column on the text side / another breathing stretch. The camera frames the printer and fox
+       in the open stage zone on the other side (right on desktop, upper half on phones). -->
+
   <!-- 00 · HERO ------------------------------------------------------------ -->
-  <section id="hero" class="hero" aria-labelledby="hero-title" tabindex="-1">
+  <section id="hero" class="hero" data-shot aria-labelledby="hero-title" tabindex="-1">
     <div class="hero__screen wrap">
       <div class="hero__year" aria-hidden="true"><span class="hero__year-rule"></span><span class="hero__year-text">2026</span><span class="hero__year-rule"></span></div>
 
@@ -186,13 +173,6 @@
         </p>
       </div>
 
-      <ol class="hero__chapters" aria-label="Chapters">
-        <li><a href="#threshold"><span class="hero__num">01</span><span class="hero__chap">The Threshold</span></a></li>
-        <li><a href="#gardens"><span class="hero__num">02</span><span class="hero__chap">Still Workshop</span></a></li>
-        <li><a href="#craft"><span class="hero__num">03</span><span class="hero__chap">The Craft</span></a></li>
-        <li><a href="#afterlight"><span class="hero__num">04</span><span class="hero__chap">Afterlight</span></a></li>
-      </ol>
-
       <h1 id="hero-title" class="hero__title">
         <span class="sr-only">3DVERSE</span>
         <span class="w hero__word" aria-hidden="true"><span><span class="w__i">3</span></span><span><span class="w__i">D</span></span><span><span class="w__i">V</span></span><span><span class="w__i">E</span></span><span><span class="w__i">R</span></span><span><span class="w__i">S</span></span><span><span class="w__i">E</span></span></span>
@@ -201,210 +181,80 @@
       <div class="hero__foot">
         <a class="scroll-cue" href="#threshold">Scroll to enter</a>
         <p class="hero__tagline">A Journey From Imagination To Reality</p>
-        <p class="hero__layer label" aria-hidden="true">Layer 0000 / 1000</p>
       </div>
 
-      <span class="plus" style="--x: 38%; --y: 30%" aria-hidden="true"></span>
-      <span class="plus" style="--x: 71%; --y: 44%" aria-hidden="true"></span>
-    </div>
-
-    <div class="hero__intro wrap grid">
-      <h2 class="hero__intro-title display">
-        <span class="line"><span class="w"><span class="w__i">An</span></span> <span class="w"><span class="w__i">empty</span></span> <span class="w"><span class="w__i">bed,</span></span></span>
-        <span class="line"><span class="w"><span class="w__i">a</span></span> <span class="w"><span class="w__i">spool</span></span> <span class="w"><span class="w__i">of</span></span> <span class="w"><span class="w__i">light,</span></span></span>
-        <span class="line"><span class="w"><span class="w__i">one</span></span> <span class="w"><span class="w__i">idea</span></span> <span class="w"><span class="w__i">left</span></span> <span class="w"><span class="w__i">open.</span></span></span>
-      </h2>
-      <div class="hero__intro-copy">
-        <p class="lede">Every object starts the same way: cold glass, a coil of filament and a thought nobody has printed yet. For one day the IoT &amp; Robotics Club opens its print lab to anyone with an idea. Come in empty-handed, leave holding something you designed.</p>
-        <p class="label">Nov 15, 2026 · 10:00 AM – 4:00 PM · Tech&nbsp;Lab&nbsp;3</p>
-      </div>
+      <span class="plus" style="--x: 9%; --y: 34%" aria-hidden="true"></span>
+      <span class="plus" style="--x: 90%; --y: 40%" aria-hidden="true"></span>
     </div>
   </section>
 
   <!-- 01 · THRESHOLD ------------------------------------------------------- -->
-  <section id="threshold" class="chapter threshold" aria-labelledby="threshold-title" tabindex="-1">
-    <div class="wrap">
-      <div class="chapter__bar">
-        <p class="label label--accent">01 — The Threshold</p>
-        <p class="label" aria-hidden="true">Layer 0001 / 1000</p>
+  <section id="threshold" class="chapter" data-shot aria-labelledby="threshold-title" tabindex="-1">
+    <div class="chapter__body wrap">
+      <div class="copy">
+        <p class="label label--accent copy__eyebrow">01 — The Threshold</p>
+        <h2 id="threshold-title" class="display display--l"><span class="w"><span class="w__i">Where</span></span> <span class="w"><span class="w__i">imagination</span></span> <span class="w"><span class="w__i">first</span></span> <span class="w"><span class="w__i">touches</span></span> <span class="w"><span class="w__i">the</span></span> <span class="w"><span class="w__i">bed.</span></span></h2>
+        <p class="lede">For one day the IoT &amp; Robotics Club opens its print lab to anyone with an idea. Sketch it, slice it, and watch one glowing line become a thing.</p>
       </div>
-
-      <div class="grid threshold__grid">
-        <h2 id="threshold-title" class="display display--l threshold__title"><span class="w"><span class="w__i">Where</span></span> <span class="w"><span class="w__i">imagination</span></span> <span class="w"><span class="w__i">first</span></span> <span class="w"><span class="w__i">touches</span></span> <span class="w"><span class="w__i">the</span></span> <span class="w"><span class="w__i">bed.</span></span></h2>
-
-        <figure class="film" data-cursor="play">
-          <div class="film__frame">
-            <img class="art" src="assets/img/first-layer.webp" srcset="assets/img/first-layer-800.webp 800w, assets/img/first-layer.webp 1600w" sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 22vw" width="1600" height="1200" alt="The print head laying the first glowing layer on the bed while the rest of the fox is still a wireframe" loading="lazy" decoding="async">
-            <span class="film__hud film__hud--tl" aria-hidden="true"><i class="film__rec"></i>Rec · Layer 001</span>
-            <span class="film__hud film__hud--tr" aria-hidden="true">Z 0.20</span>
-            <span class="film__scrub" aria-hidden="true"><i></i></span>
-            <svg class="film__play" aria-hidden="true" focusable="false"><use href="#i-play"/></svg>
-          </div>
-          <figcaption class="film__cap label"><span>Film — The first layer</span><span>00:48</span></figcaption>
-        </figure>
-
-        <dl class="readout threshold__readout">
-          <div><dt>Layer</dt><dd>0.20 mm</dd></div>
-          <div><dt>Z-axis</dt><dd>000.20</dd></div>
-          <div><dt>Bed</dt><dd>60 °C</dd></div>
-          <div><dt>Nozzle</dt><dd>215 °C</dd></div>
-        </dl>
-
-        <p class="lede threshold__lede">Before the first layer there is only a flat build plate and a nozzle waiting 0.20 mm above it. This is where the walk begins: sketch it, slice it, send it, and watch one glowing line of filament turn a thought into a thing.</p>
-
-        <div class="vert threshold__vert">
-          <p class="vert__jp" lang="ja">造形</p>
-          <p class="vert__note label" aria-hidden="true">Zokei — form-making</p>
-        </div>
-      </div>
+      <p class="vert" lang="ja" aria-hidden="true">造形</p>
     </div>
-    <span class="plus" style="--x: 46%; --y: 86%" aria-hidden="true"></span>
   </section>
 
   <!-- 02 · STILL WORKSHOP -------------------------------------------------- -->
-  <section id="gardens" class="chapter gardens" aria-labelledby="gardens-title" tabindex="-1">
-    <div class="wrap">
-      <div class="chapter__bar">
-        <p class="label label--accent">02 — The Still Workshop</p>
-        <p class="label" aria-hidden="true">Layer 0412 / 1000</p>
+  <section id="gardens" class="chapter" data-shot aria-labelledby="gardens-title" tabindex="-1">
+    <div class="chapter__body wrap">
+      <div class="copy">
+        <p class="label label--accent copy__eyebrow">02 — The Still Workshop</p>
+        <h2 id="gardens-title" class="display display--l"><span class="w"><span class="w__i">Nothing</span></span> <span class="w"><span class="w__i">moves</span></span> <span class="w"><span class="w__i">but</span></span> <span class="w"><span class="w__i">the</span></span> <span class="w"><span class="w__i">nozzle.</span></span></h2>
+        <p class="lede">Hours into a long print the lab goes quiet, and a shape climbs out of the bed one hair-thin layer at a time.</p>
       </div>
-
-      <div class="grid gardens__head">
-        <h2 id="gardens-title" class="display display--l gardens__title"><span class="w"><span class="w__i">Nothing</span></span> <span class="w"><span class="w__i">moves</span></span> <span class="w"><span class="w__i">but</span></span> <span class="w"><span class="w__i">the</span></span> <span class="w"><span class="w__i">nozzle.</span></span></h2>
-        <p class="lede gardens__lede">Hours into a long print the lab goes quiet. Fans hum, hot-ends glow like lanterns, and a shape climbs out of the bed one hair-thin layer at a time.</p>
-      </div>
-
-      <div class="frames">
-        <!-- APPROACH: the gantry gate on the stepped terraces, under the orange disc -->
-        <figure class="frame frame--lg" data-cursor="view">
-          <div class="frame__img">
-            <img class="art" src="assets/img/approach.webp" srcset="assets/img/approach-800.webp 800w, assets/img/approach.webp 1600w" sizes="(max-width: 960px) 92vw, 53vw" width="1600" height="1600" alt="Printed stair slabs climbing to the printer gantry, framed like a gate against a huge orange moon" loading="lazy" decoding="async">
-            <p class="frame__jp" lang="ja">参道</p>
-            <h3 class="frame__title"><span class="w"><span class="w__i">Approach</span></span></h3>
-          </div>
-          <figcaption class="frame__cap label"><span>The long print — 01 / 03</span><span>Z 000.20 → 184.60</span></figcaption>
-        </figure>
-
-        <!-- NOZZLES: hot-ends hanging like lanterns in front of warm enclosure panels -->
-        <figure class="frame" data-cursor="view">
-          <div class="frame__img">
-            <img class="art" src="assets/img/nozzles.webp" srcset="assets/img/nozzles-800.webp 800w, assets/img/nozzles.webp 1600w" sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 37vw" width="1600" height="1000" alt="Close-up of the glowing nozzle laying a hot layer on the half-printed fox" loading="lazy" decoding="async">
-            <p class="frame__jp" lang="ja">灯</p>
-            <h3 class="frame__title"><span class="w"><span class="w__i">Nozzles</span></span></h3>
-          </div>
-          <figcaption class="frame__cap label"><span>The long print — 02 / 03</span><span>Hot-end 215 °C</span></figcaption>
-        </figure>
-
-        <!-- COOLDOWN: the finished fox figurine under cold moonlight -->
-        <figure class="frame" data-cursor="view">
-          <div class="frame__img">
-            <img class="art" src="assets/img/cooldown.webp" srcset="assets/img/cooldown-800.webp 800w, assets/img/cooldown.webp 1600w" sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 37vw" width="1600" height="1000" alt="The finished low-poly fox on the bed, rim-lit against the moon" loading="lazy" decoding="async">
-            <p class="frame__jp" lang="ja">冷却</p>
-            <h3 class="frame__title"><span class="w"><span class="w__i">Cooldown</span></span></h3>
-          </div>
-          <figcaption class="frame__cap label"><span>The long print — 03 / 03</span><span>Bed 60 → 24 °C</span></figcaption>
-        </figure>
-      </div>
+      <p class="vert" lang="ja" aria-hidden="true">静</p>
     </div>
   </section>
 
   <!-- 03 · THE CRAFT ------------------------------------------------------- -->
-  <section id="craft" class="chapter craft" aria-labelledby="craft-title" tabindex="-1">
-    <div class="wrap">
-      <div class="chapter__bar">
-        <p class="label label--accent">03 — The Craft</p>
-        <p class="label" aria-hidden="true">Layer 0786 / 1000</p>
+  <section id="craft" class="chapter" data-shot aria-labelledby="craft-title" tabindex="-1">
+    <div class="chapter__body wrap">
+      <div class="copy">
+        <p class="label label--accent copy__eyebrow">03 — The Craft</p>
+        <h2 id="craft-title" class="display display--l"><span class="line"><span class="w"><span class="w__i">One</span></span> <span class="w"><span class="w__i">day.</span></span> <span class="w"><span class="w__i">Six</span></span> <span class="w"><span class="w__i">hours.</span></span></span> <span class="line"><span class="w"><span class="w__i">A</span></span> <span class="w"><span class="w__i">thousand</span></span> <span class="w"><span class="w__i">layers.</span></span></span></h2>
+        <p class="lede">Four sessions, 10:00 AM to 4:00 PM. No experience needed.</p>
+        <ul class="features" aria-label="Sessions">
+          <li class="feature"><span class="feature__icon" aria-hidden="true"><svg focusable="false"><use href="#i-nozzle"/></svg></span><span class="feature__num" aria-hidden="true">01</span><span class="feature__name">3D Printing Workshop</span></li>
+          <li class="feature"><span class="feature__icon" aria-hidden="true"><svg focusable="false"><use href="#i-cube"/></svg></span><span class="feature__num" aria-hidden="true">02</span><span class="feature__name">3D Modeling Sessions</span></li>
+          <li class="feature"><span class="feature__icon" aria-hidden="true"><svg focusable="false"><use href="#i-build"/></svg></span><span class="feature__num" aria-hidden="true">03</span><span class="feature__name">Hands-on Building</span></li>
+          <li class="feature"><span class="feature__icon" aria-hidden="true"><svg focusable="false"><use href="#i-talk"/></svg></span><span class="feature__num" aria-hidden="true">04</span><span class="feature__name">Expert Interactions</span></li>
+        </ul>
       </div>
-
-      <div class="grid craft__head">
-        <h2 id="craft-title" class="display display--l craft__title"><span class="line"><span class="w"><span class="w__i">One</span></span> <span class="w"><span class="w__i">day.</span></span> <span class="w"><span class="w__i">Six</span></span> <span class="w"><span class="w__i">hours.</span></span></span> <span class="line"><span class="w"><span class="w__i">A</span></span> <span class="w"><span class="w__i">thousand</span></span> <span class="w"><span class="w__i">layers.</span></span></span></h2>
-        <p class="lede craft__lede">Four sessions run through the day, 10:00 AM to 4:00 PM. No experience needed: every bench has printers, filament and people who have failed more prints than you will ever start.</p>
-      </div>
-
-      <figure class="frame frame--wide craft__still" data-cursor="view">
-        <div class="frame__img">
-          <img class="art" src="assets/img/lab-panels.webp" srcset="assets/img/lab-panels-800.webp 800w, assets/img/lab-panels.webp 1600w" sizes="92vw" width="1600" height="686" alt="The workshop hall at night, its paper panels glowing amber behind dark timber" loading="lazy" decoding="async">
-          <p class="frame__jp" lang="ja">光</p>
-          <h3 class="frame__title"><span class="w"><span class="w__i">The</span></span> <span class="w"><span class="w__i">hall</span></span></h3>
-        </div>
-        <figcaption class="frame__cap label"><span>Where the four sessions run</span><span>10:00 AM – 4:00 PM</span></figcaption>
-      </figure>
-
-      <ol class="sessions">
-        <li class="session">
-          <div class="session__top">
-            <span class="session__num">01</span>
-            <span class="session__tag"><span lang="ja">積層</span><span class="session__tag-en">Layering</span></span>
-          </div>
-          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-nozzle"/></svg></span>
-          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">3D</span></span> <span class="w"><span class="w__i">Printing</span></span></span> <span class="line"><span class="w"><span class="w__i">Workshop</span></span></span></h3>
-          <p class="session__desc">Level, slice and print, then watch your first part rise layer by layer.</p>
-        </li>
-        <li class="session">
-          <div class="session__top">
-            <span class="session__num">02</span>
-            <span class="session__tag"><span lang="ja">設計</span><span class="session__tag-en">Design</span></span>
-          </div>
-          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-cube"/></svg></span>
-          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">3D</span></span> <span class="w"><span class="w__i">Modeling</span></span></span> <span class="line"><span class="w"><span class="w__i">Sessions</span></span></span></h3>
-          <p class="session__desc">Turn a rough sketch into a clean model that is ready to print.</p>
-        </li>
-        <li class="session">
-          <div class="session__top">
-            <span class="session__num">03</span>
-            <span class="session__tag"><span lang="ja">組立</span><span class="session__tag-en">Assembly</span></span>
-          </div>
-          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-build"/></svg></span>
-          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">Hands-on</span></span></span> <span class="line"><span class="w"><span class="w__i">Building</span></span></span></h3>
-          <p class="session__desc">Fit, sand and finish real parts with your own hands.</p>
-        </li>
-        <li class="session">
-          <div class="session__top">
-            <span class="session__num">04</span>
-            <span class="session__tag"><span lang="ja">対話</span><span class="session__tag-en">Dialogue</span></span>
-          </div>
-          <span class="session__icon" aria-hidden="true"><svg focusable="false"><use href="#i-talk"/></svg></span>
-          <h3 class="session__title"><span class="line"><span class="w"><span class="w__i">Expert</span></span></span> <span class="line"><span class="w"><span class="w__i">Interactions</span></span></span></h3>
-          <p class="session__desc">Bring your hardest question to people who print for a living.</p>
-        </li>
-      </ol>
+      <p class="vert" lang="ja" aria-hidden="true">積層</p>
     </div>
-    <span class="plus" style="--x: 82%; --y: 12%" aria-hidden="true"></span>
   </section>
 
   <!-- 04 · AFTERLIGHT / REGISTER ------------------------------------------- -->
-  <section id="afterlight" class="chapter afterlight" aria-labelledby="afterlight-title" tabindex="-1">
-    <div class="wrap">
-      <div class="chapter__bar">
-        <p class="label label--accent">04 — Afterlight</p>
-        <p class="label" aria-hidden="true">Layer 1000 / 1000</p>
-      </div>
-
-      <div class="grid afterlight__head">
-        <h2 id="afterlight-title" class="display display--xl afterlight__title"><span class="w"><span class="w__i">From</span></span> <span class="w"><span class="w__i">imagination</span></span> <span class="w"><span class="w__i">to</span></span> <span class="w"><span class="w__i">reality.</span></span></h2>
-        <div class="vert afterlight__vert">
-          <p class="vert__jp" lang="ja">現実</p>
-          <p class="vert__note label" aria-hidden="true">Genjitsu — reality</p>
-        </div>
-      </div>
-
-      <div class="cta">
-        <div class="cta__main">
-          <p class="lede cta__lede">One day in the lab. One object you'll carry home. Register, then bring an idea.</p>
+  <section id="afterlight" class="chapter afterlight" data-shot aria-labelledby="afterlight-title" tabindex="-1">
+    <div class="chapter__body wrap">
+      <div class="copy">
+        <p class="label label--accent copy__eyebrow">04 — Afterlight</p>
+        <h2 id="afterlight-title" class="display display--l"><span class="w"><span class="w__i">From</span></span> <span class="w"><span class="w__i">imagination</span></span> <span class="w"><span class="w__i">to</span></span> <span class="w"><span class="w__i">reality.</span></span></h2>
+        <div class="cta">
           <a class="btn-register" href="#afterlight" data-register>
             <span>Register Now</span>
             <svg class="btn-register__arrow" aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg>
           </a>
-        </div>
-        <div class="qr">
-          <div class="qr__code" data-qr></div>
-          <div class="qr__text">
+          <div class="qr">
+            <div class="qr__code" data-qr></div>
             <p class="qr__label">Scan to register</p>
-            <p class="label">Point your camera here</p>
           </div>
         </div>
       </div>
+      <p class="vert" lang="ja" aria-hidden="true">現実</p>
+    </div>
+  </section>
 
+  <!-- EVENT DETAILS: the poster's cream band, on its own (not a camera shot: it rides the walk to the footer) -->
+  <section class="details" aria-labelledby="details-title">
+    <div class="details__body wrap">
+      <h2 id="details-title" class="sr-only">Event details</h2>
       <div class="ticket">
         <svg class="ticket__cubes" viewBox="0 0 150 186" aria-hidden="true" focusable="false">
           <g stroke="#0A0A0B" stroke-opacity=".22" stroke-linejoin="round">
@@ -432,58 +282,47 @@
         </dl>
       </div>
     </div>
-    <span class="plus" style="--x: 64%; --y: 9%" aria-hidden="true"></span>
-    <span class="plus" style="--x: 9%; --y: 48%" aria-hidden="true"></span>
   </section>
 </main>
 
-<!-- 05 · FOOTER / MANIFESTO ------------------------------------------------ -->
+<!-- 05 · FOOTER ------------------------------------------------------------- -->
 <footer class="footer" data-inert-when-menu>
-  <div class="wrap">
-    <div class="footer__brand">
-      <svg class="footer__mark" aria-hidden="true" focusable="false"><use href="#i-mark"/></svg>
-      <span class="brand__name">3DVERSE</span>
-      <span class="label">Event 01 · 2026</span>
-    </div>
+  <div class="footer__body wrap">
+    <div class="copy copy--footer">
+      <div class="footer__brand">
+        <svg class="footer__mark" aria-hidden="true" focusable="false"><use href="#i-mark"/></svg>
+        <span class="brand__name">3DVERSE</span>
+        <span class="label">Event 01 · 2026</span>
+      </div>
 
-    <p class="footer__manifesto">A five-chapter night walk through a live 3D print lab. Four sessions, one day, one object you'll carry home.</p>
-
-    <div class="grid footer__grid">
+      <p class="footer__manifesto">A night walk through a live 3D print lab. One day, one object you'll carry home.</p>
       <p class="footer__credit label">Presented by IoT &amp; Robotics Club, Student Cabinet, School of CSET, Bennett University (NAAC A+)</p>
-      <nav class="footer__col" aria-labelledby="f-chapters">
-        <h2 id="f-chapters" class="footer__h"><span class="w"><span class="w__i">Chapters</span></span></h2>
-        <ul>
-          <li><a href="#threshold">The Threshold</a></li>
-          <li><a href="#gardens">Still Workshop</a></li>
-          <li><a href="#craft">The Craft</a></li>
-          <li><a href="#afterlight">Afterlight</a></li>
-        </ul>
-      </nav>
-      <nav class="footer__col" aria-labelledby="f-practice">
-        <h2 id="f-practice" class="footer__h"><span class="w"><span class="w__i">Practice</span></span></h2>
-        <ul>
-          <li><a href="#craft">3D Printing Workshop</a></li>
-          <li><a href="#craft">3D Modeling Sessions</a></li>
-          <li><a href="#craft">Hands-on Building</a></li>
-          <li><a href="#craft">Expert Interactions</a></li>
-        </ul>
-      </nav>
-      <nav class="footer__col" aria-labelledby="f-elsewhere">
-        <h2 id="f-elsewhere" class="footer__h"><span class="w"><span class="w__i">Elsewhere</span></span></h2>
-        <ul>
-          <li><a href="#afterlight" data-register>Register <span aria-hidden="true">↗</span></a></li>
-          <li><a href="https://www.bennett.edu.in/">Bennett University <span aria-hidden="true">↗</span></a></li>
-          <li><a href="#hero">Back to top <span aria-hidden="true">↑</span></a></li>
-        </ul>
-      </nav>
+
+      <div class="footer__cols">
+        <nav class="footer__col" aria-labelledby="f-chapters">
+          <h2 id="f-chapters" class="footer__h">Chapters</h2>
+          <ul>
+            <li><a href="#threshold">The Threshold</a></li>
+            <li><a href="#gardens">Still Workshop</a></li>
+            <li><a href="#craft">The Craft</a></li>
+            <li><a href="#afterlight">Afterlight</a></li>
+          </ul>
+        </nav>
+        <nav class="footer__col" aria-labelledby="f-elsewhere">
+          <h2 id="f-elsewhere" class="footer__h">Elsewhere</h2>
+          <ul>
+            <li><a href="#afterlight" data-register>Register <span aria-hidden="true">↗</span></a></li>
+            <li><a href="https://www.bennett.edu.in/">Bennett University <span aria-hidden="true">↗</span></a></li>
+            <li><a href="#hero">Back to top <span aria-hidden="true">↑</span></a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
 
     <div class="footer__bottom label">
       <p>© 2026 3DVERSE — IoT &amp; Robotics Club · <span class="jp" lang="ja">層を重ねる</span> · WebGL · Bennett</p>
-      <p aria-hidden="true">Layer 1000 / 1000</p>
     </div>
   </div>
-  <span class="plus" style="--x: 88%; --y: 18%" aria-hidden="true"></span>
 </footer>
 
 </body>

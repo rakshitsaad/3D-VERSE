@@ -32,7 +32,7 @@ export function createParticles({ palette, quality }) {
       uTime,
       uMin: { value: new THREE.Vector3(-32, 0, -48) },
       uSize: { value: new THREE.Vector3(64, 30, 78) },
-      uLen: { value: 0.7 },
+      uLen: { value: 0.5 },
       uColor: { value: palette.cold },
       uOpacity: { value: 0.3 },
     },
@@ -77,10 +77,10 @@ export function createParticles({ palette, quality }) {
     });
     return { mesh, items };
   };
-  const curls = drifters(new THREE.TorusGeometry(0.16, 0.014, 3, 12, Math.PI * 1.5), quality.curls, [
+  const curls = drifters(new THREE.TorusGeometry(0.11, 0.011, 3, 12, Math.PI * 1.5), quality.curls, [
     palette.vermilion, palette.vermilion, palette.amber,
   ]);
-  const voxels = drifters(new THREE.BoxGeometry(0.1, 0.1, 0.1), quality.voxels, [
+  const voxels = drifters(new THREE.BoxGeometry(0.07, 0.07, 0.07), quality.voxels, [
     palette.vermilion, palette.vermilion.clone().multiplyScalar(0.7), palette.bone.clone().multiplyScalar(0.7),
   ]);
   const q = new THREE.Quaternion();
@@ -127,7 +127,7 @@ export function createParticles({ palette, quality }) {
     blending: THREE.AdditiveBlending,
     uniforms: {
       uIntensity: { value: 0.9 },
-      uSize: { value: 30 },
+      uSize: { value: 20 },
       uPixelRatio: { value: 1 },
       uHot: { value: palette.amber },
       uCool: { value: palette.vermilion },

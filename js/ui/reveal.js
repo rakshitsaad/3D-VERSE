@@ -9,12 +9,11 @@
 // module hasn't announced itself within 3 s, so content never depends on it to be readable.
 // Keep these selector lists in sync with the "Reveals" block in css/main.css.
 
-export const HEADINGS = '.display, .session__title, .frame__title, .hero__word';
-export const RULES = '.chapter__bar, .hero__chapters a, .sessions, .readout, .footer__bottom';
+export const HEADINGS = '.display, .hero__word';
+export const RULES = '.features, .footer__bottom';
 export const ITEMS = [
-  '.hero__credit > span', '.hero__event', '.hero__chapters li', '.scroll-cue', '.hero__tagline', '.hero__layer',
-  '.chapter__bar > p', '.lede', '.hero__intro-copy > .label', '.film', '.readout > div', '.vert',
-  '.frame', '.session', '.btn-register', '.qr', '.ticket',
+  '.hero__credit > span', '.hero__event', '.scroll-cue', '.hero__tagline',
+  '.copy__eyebrow', '.lede', '.feature', '.btn-register', '.qr', '.ticket',
   '.footer__brand', '.footer__manifesto', '.footer__credit', '.footer__col', '.footer__bottom > p',
 ].join(', ');
 
@@ -72,7 +71,7 @@ export function initReveal() {
     fresh.forEach((el) => observer.unobserve(el));
 
     const delays = new Map();
-    const container = (el) => el.parentElement?.closest('.frame, .session, .film');
+    const container = (el) => el.parentElement?.closest('.ticket');
     const lead = fresh.filter((el) => headings.has(el) && !container(el));
     lead.forEach((el, i) => delays.set(el, i * 160));
     const longest = Math.max(0, ...lead.map((el) => headings.get(el).length));

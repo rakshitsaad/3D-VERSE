@@ -12,7 +12,7 @@ import { createAtmosphere } from './atmosphere.js';
 import { createTerrain } from './terrain.js';
 import { createMoon } from './moon.js';
 import { createLab } from './lab.js';
-import { createPrinter } from './printer.js';
+import { createPrinter, PRINTER } from './printer.js';
 import { createNature } from './nature.js';
 import { createParticles } from './particles.js';
 import { createPost } from './post.js';
@@ -28,15 +28,19 @@ const PRINT_SNAP = 0.0005;    // closer than this, the shown timeline snaps onto
 const SPARK_SPEED = 0.1;      // print progress per second that throws sparks at the full rate
 const CROSSFADE = 0.7;     // seconds: under reduced motion the camera cuts between shots behind a dissolve
 const LAST_SHOT = SHOTS.length - 1;
+// The stage: the image slides (a lens shift: the projection is sheared, the camera does not move) so the
+// fox lands on the shot's stage point, in the open zone opposite the text column.
+const STAGE_ANCHOR = new THREE.Vector3(PRINTER.base.x, PRINTER.base.y + PRINTER.bedTop + PRINTER.foxHeight * 0.55, PRINTER.base.z);
+const STAGE_MAX = 0.9; // NDC: never slide further than this
 
-// Scene brightness per section: dimmed where dense content sits on top of it. Portrait screens stack the
-// type over the middle of the frame (where the moon and the hall glow), so they dim further.
-const EXPOSURE = [1, 0.74, 0.5, 0.58, 0.95, 0.62];
-const EXPOSURE_PORTRAIT = [1, 0.6, 0.42, 0.46, 0.4, 0.56];
+// Scene brightness per section. The text sits in its own column over a scrim, so the scene stays bright
+// where the printer is; only the footer's thick haze is held down.
+const EXPOSURE = [1, 0.94, 0.9, 0.92, 0.95, 0.66];
+const EXPOSURE_PORTRAIT = [1, 0.9, 0.86, 0.88, 0.88, 0.6];
 
 const QUALITY = {
-  full: { dpr: 1.75, samples: 4, terrain: [96, 68], trees: 64, grass: 2600, rocks: 18, rain: 1500, curls: 60, voxels: 70, embers: 140 },
-  small: { dpr: 1.25, samples: 0, terrain: [60, 44], trees: 34, grass: 900, rocks: 10, rain: 550, curls: 28, voxels: 32, embers: 70 },
+  full: { dpr: 1.75, samples: 4, terrain: [96, 68], trees: 64, grass: 2600, rocks: 18, rain: 640, curls: 26, voxels: 30, embers: 64 },
+  small: { dpr: 1.25, samples: 0, terrain: [60, 44], trees: 34, grass: 900, rocks: 10, rain: 240, curls: 12, voxels: 14, embers: 32 },
 };
 
 export function createWorld(canvas) {
@@ -93,20 +97,31 @@ export function createWorld(canvas) {
   window.addEventListener('pointermove', onPointerMove, { passive: true });
   window.addEventListener('pointerout', onPointerOut);
 
+  const anchor = new THREE.Vector3();
+  const stagePoint = new THREE.Vector2();
   function placeCamera(t) {
     path.sample(t, shot);
     // portrait screens need a wider lens: keep >= 36° horizontally and dolly in during the entrance
     const portraitFov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(minHFov / 2) / camera.aspect));
-    const fov = Math.max(shot.fov, portraitFov);
-    if (Math.abs(camera.fov - fov) > 1e-4) {
-      camera.fov = fov;
-      camera.updateProjectionMatrix();
-    }
+    camera.fov = Math.max(shot.fov, portraitFov);
+    camera.updateProjectionMatrix();
     const dolly = isPortrait() ? 1 - 0.2 * (1 - smoothstep(0.03, 0.12, t)) : 1;
     camera.position.lerpVectors(shot.target, shot.position, dolly);
     camera.lookAt(shot.target);
     camera.rotateY(-parallax.x * PARALLAX);
     camera.rotateX(-parallax.y * PARALLAX);
+
+    // lens shift: slide the image so the fox sits on the stage point (landscape and portrait blend by aspect)
+    camera.updateMatrixWorld();
+    anchor.copy(STAGE_ANCHOR).applyMatrix4(camera.matrixWorldInverse);
+    if (anchor.z < -0.5) {
+      anchor.applyMatrix4(camera.projectionMatrix);
+      stagePoint.lerpVectors(shot.stagePortrait, shot.stage, smoothstep(0.75, 1.1, camera.aspect));
+      const e = camera.projectionMatrix.elements;
+      e[8] -= clamp(stagePoint.x - anchor.x, -STAGE_MAX, STAGE_MAX); // NDC x' = x - e8, at any depth
+      e[9] -= clamp(stagePoint.y - anchor.y, -STAGE_MAX, STAGE_MAX);
+      camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+    }
   }
 
   const state = {
@@ -133,6 +148,9 @@ export function createWorld(canvas) {
   };
 
   const follow = { value: 0, velocity: 0 };
+  // a reader of the print (the page's layer readout): told whenever the print moves, never drives it
+  let printListener = null;
+  let printAnnounced = false;
   // print timeline: the scroll's path position (targetProgress) is its only input. Print, park, nozzle
   // heat and spark rate are all pure functions of it (sampled from the same shot keyframes as the camera),
   // so a given scroll position always shows the same print, however it was reached.
@@ -192,10 +210,11 @@ export function createWorld(canvas) {
     state.sparks = printShot.sparks;
 
     for (const part of parts) part.update?.(state);
+    if (printListener && (state.print !== before || !printAnnounced)) { printAnnounced = true; printListener(state.print); }
     // post follows the camera's shot (scroll-driven); the grain is the only thing on the clock
     bloom.strength = shot.bloom;
     lens.uniforms.uExposure.value = exposure;
-    lens.uniforms.uHaze.value = 0.08 * Math.min(shot.haze, 1.2); // the footer's thick haze is the scene fog's job
+    lens.uniforms.uHaze.value = 0.05 * Math.min(shot.haze, 1.2); // the footer's thick haze is the scene fog's job
     lens.uniforms.uSeed.value = state.reduced ? 0 : (state.time * 24) % 997; // frozen under reduced motion
   }
 
@@ -296,5 +315,7 @@ export function createWorld(canvas) {
     renderer.dispose();
   }
 
-  return { setProgress, setSection, resize, render, dispose, renderer, scene, camera, state, shot, path, printer, particles, post };
+  const onPrint = (fn) => { printListener = fn; printAnnounced = false; start(); };
+
+  return { setProgress, setSection, resize, render, dispose, onPrint, renderer, scene, camera, state, shot, path, printer, particles, post };
 }

@@ -19,7 +19,9 @@ const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 export function initScroll({ onProgress, onSection, onFrame } = {}) {
   const nav = document.querySelector('[data-nav]');
-  const sections = [...document.querySelectorAll('main > section[id]')];
+  // the camera blocks: one composed shot each. The event-details band between Afterlight and the footer
+  // is not one: it rides the walk from the Afterlight shot to the footer's.
+  const sections = [...document.querySelectorAll('main > section[data-shot]')];
   const footer = document.querySelector('body > footer');
   const blocks = footer ? [...sections, footer] : sections;
   const linksFor = (id) => document.querySelectorAll(`.rail a[href="#${id}"], [data-nav-link][href="#${id}"]`);

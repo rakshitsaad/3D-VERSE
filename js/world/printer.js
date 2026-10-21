@@ -122,7 +122,13 @@ export function createPrinter({ palette }) {
   group.name = 'printer';
   group.position.copy(PRINTER.base);
 
-  const frameMat = new THREE.MeshStandardMaterial({ color: palette.char, metalness: 0.3, roughness: 0.65 }); // anodised, satin
+  // a cool rim (fresnel, in the emissive) separates the dark frame and the cream fox from the night behind
+  const uRim = { value: palette.cold.clone().multiplyScalar(0.3) };
+  const RIM = 'totalEmissiveRadiance += uRim * pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0);';
+  const frameMat = patchMaterial(
+    new THREE.MeshStandardMaterial({ color: palette.char, metalness: 0.3, roughness: 0.65 }), // anodised, satin
+    { key: 'printer-frame', uniforms: { uRim }, header: 'uniform vec3 uRim;', emissive: RIM },
+  );
   const orangeMat = new THREE.MeshStandardMaterial({ color: palette.vermilion, metalness: 0.1, roughness: 0.5 });
   const steelMat = new THREE.MeshStandardMaterial({ color: palette.steel, metalness: 0.75, roughness: 0.28 });
 
@@ -218,8 +224,9 @@ export function createPrinter({ palette }) {
     uGlow: { value: palette.amber },
     uInfill: { value: palette.vermilion.clone().multiplyScalar(0.55) },
     uLayers: { value: 140 }, // visible layer lines over the fox's height
+    uRim: { value: palette.cold.clone().multiplyScalar(0.42) },
   };
-  const foxHeader = 'uniform float uPrint; uniform float uBase; uniform float uHeight; uniform vec3 uGlow; uniform vec3 uInfill; uniform float uLayers;';
+  const foxHeader = 'uniform float uPrint; uniform float uBase; uniform float uHeight; uniform vec3 uGlow; uniform vec3 uInfill; uniform float uLayers; uniform vec3 uRim;';
   const foxMat = patchMaterial(
     // a faint emissive floor keeps the cream reading as cream in the night light
     new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, side: THREE.DoubleSide, emissive: palette.bone.clone().multiplyScalar(0.18) }),
@@ -239,6 +246,7 @@ export function createPrinter({ palette }) {
       emissive: /* glsl */ `
         float fresh = smoothstep(uPrint - 0.02, uPrint, hPrint) * step(0.0005, uPrint) * (1.0 - step(0.9995, uPrint));
         totalEmissiveRadiance += uGlow * fresh * 0.9;
+        totalEmissiveRadiance += uRim * pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0);
         if (!gl_FrontFacing) totalEmissiveRadiance += uGlow * 0.5 * smoothstep(uPrint - 0.08, uPrint, hPrint);`,
     },
   );

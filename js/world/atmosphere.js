@@ -105,7 +105,11 @@ export function createAtmosphere({ palette }) {
   hazeFront.renderOrder = hazeBack.renderOrder = 2;
   const hazes = [[hazeFront, 0.07], [hazeBack, 0.2]];
 
-  group.add(sky, moonLight, fill, hemi, nozzleLight, ...panelLights, hazeFront, hazeBack);
+  // cold rim from behind and above the printer: outlines the gantry and the fox against the hall
+  const rimLight = new THREE.DirectionalLight(palette.cold, 2.2);
+  rimLight.position.set(-9, 18, -34);
+  rimLight.target.position.set(0, 5.5, -6.9);
+  group.add(sky, moonLight, fill, hemi, nozzleLight, ...panelLights, rimLight, rimLight.target, hazeFront, hazeBack);
 
   return {
     group,

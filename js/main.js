@@ -40,6 +40,9 @@ if (canvas) {
       world = createWorld(canvas);
       world.setSection(section);
       world.setProgress(progress, { immediate: true }); // start on the right shot, no fly-in
+      // the one readout on screen: the print's current layer, written whenever the print moves
+      const layer = document.querySelector('[data-layer]');
+      if (layer) world.onPrint((p) => { layer.textContent = String(Math.round(p * 1000)).padStart(4, '0'); });
       // ?debug exposes the world and the scroll state for inspection and tests
       if (new URLSearchParams(location.search).has('debug')) {
         window.__3dverse = { world, scroll };
